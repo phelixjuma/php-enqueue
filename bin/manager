@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Phelixjuma\Enqueue\Manager;
+use Phelixjuma\Enqueue\RedisQueue;
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(dirname(__DIR__));
+$dotenv->load();
+
+$redisHost = getenv('REDIS_HOST');
+$redisPort = getenv('REDIS_PORT');
+$redis = new Predis\Client("tcp://127.0.0.1:6379");
+
+$queue = new RedisQueue($redis);
+
+$application = new Manager($queue);
+$application->run();

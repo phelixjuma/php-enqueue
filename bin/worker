@@ -1,0 +1,38 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Phelixjuma\Enqueue\Worker;
+use Phelixjuma\Enqueue\RedisQueue;
+use Predis\Client;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Dotenv\Dotenv;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+
+$dotenv = Dotenv::createImmutable(dirname(__DIR__));
+$dotenv->load();
+
+$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:']);
+
+$concurrency = isset($options['concurrency']) ? (int) $options['concurrency'] : 1;
+$queueName = $options['queue'] ?? null;
+$logPath = $options['log_path'] ?? null;
+$logLevel = $options['log_level'] ?? null;
+$maxRetries = $options['max_retries'] ?? null;
+
+
+$redisHost = getenv('REDIS_HOST');
+$redisPort = getenv('REDIS_PORT');
+$redis = new Client('tcp://127.0.0.1:6379');
+
+$queue = new RedisQueue($redis, $queueName);
+$dispatcher = new EventDispatcher();
+
+// create a log channel
+$log = new Logger($queueName);
+$log->pushHandler(new StreamHandler($logPath.'/'.$queueName.'.log', Logger::DEBUG));
+
+$worker = new Worker($queue, $concurrency, $maxRetries,  $dispatcher, $log);
+$worker->start();

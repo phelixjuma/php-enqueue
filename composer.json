@@ -1,0 +1,33 @@
+{
+  "name": "phelixjuma/php-enqueue",
+  "description": "A simple PHP job queue system.",
+  "type": "library",
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "vlucas/phpdotenv": "^5.3",
+    "predis/predis": "^1.1",
+    "symfony/console": "^5.3",
+    "amphp/parallel": "^2.2",
+    "symfony/event-dispatcher": "^5.3",
+    "psr/log":  "^3.0",
+    "ext-json": "*",
+    "monolog/monolog": "^3.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Phelixjuma\\Enqueue\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Phelixjuma\\Enqueue\\Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
+  "bin": [
+    "bin/worker",
+    "bin/manager"
+  ]
+}
