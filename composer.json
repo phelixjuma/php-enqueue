@@ -4,13 +4,13 @@
   "type": "library",
   "require": {
     "php": "^7.4 || ^8.0",
+    "ext-json": "*",
     "vlucas/phpdotenv": "^5.3",
     "predis/predis": "^1.1",
     "symfony/console": "^5.3",
     "amphp/parallel": "^2.2",
     "symfony/event-dispatcher": "^5.3",
     "psr/log":  "^3.0",
-    "ext-json": "*",
     "monolog/monolog": "^3.4"
   },
   "autoload": {
