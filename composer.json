@@ -1,6 +1,6 @@
 {
   "name": "phelixjuma/php-enqueue",
-  "description": "A simple PHP job queue system.",
+  "description": "This is a simple but robust implementation of redis-based job queues in PHP.",
   "type": "library",
   "require": {
     "php": "^7.4 || ^8.0",
