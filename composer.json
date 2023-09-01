@@ -29,5 +29,14 @@
   "bin": [
     "bin/worker",
     "bin/manager"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Phelix Juma",
+      "email": "jp@docusift.ai",
+      "homepage": "https://docusift.ai",
+      "role": "Developer"
+    }
   ]
 }
