@@ -21,7 +21,7 @@ Installation
 ============
 
 ```
-composer install phelixjuma/php-enqueue
+composer require phelixjuma/php-enqueue
 ```
 
 # USAGE
