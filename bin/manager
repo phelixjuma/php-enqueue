@@ -7,9 +7,7 @@ use Phelixjuma\Enqueue\Manager;
 use Phelixjuma\Enqueue\RedisQueue;
 use Dotenv\Dotenv;
 
-print getcwd();
 $dotenv = Dotenv::createImmutable(getcwd());
-
 $dotenv->load();
 
 $redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? "");
