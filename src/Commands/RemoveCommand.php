@@ -25,6 +25,13 @@ class RemoveCommand extends Command
             ->setName('enqueue:remove')
             ->setDescription('Remove a task from the queue.')
             ->addOption(
+                'project_root',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The path to the project root',
+                'default'
+            )
+            ->addOption(
                 'queue',
                 null,
                 InputOption::VALUE_REQUIRED,

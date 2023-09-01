@@ -25,7 +25,13 @@ class AddCommand extends Command
         $this
             ->setName('enqueue:add')
             ->setDescription('Add a task to the queue.')
-            // configure the queue option
+            ->addOption(
+                'project_root',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The path to the project root',
+                'default'
+            )
             ->addOption(
                 'queue',
                 null,

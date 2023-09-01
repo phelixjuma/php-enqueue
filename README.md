@@ -34,7 +34,7 @@ Job execution is done concurrently using amphp/parallel package which allows for
 
 To set up a worker, run the command below:
 ```
-./bin/worker --queue=name_of_queue --concurrency=1 --max_retries=3 --log_path="" log_level=100
+./bin/worker --queue=name_of_queue --concurrency=1 --max_retries=3 --log_path=/path/to/log log_level=100 --project_root=/path/to/project/root
 ```
 
 Note that the worker takes parameters such us:
@@ -53,16 +53,16 @@ You have options to manage tasks in the command line.
 
 ### 2.1 View list of jobs
 ```
-./bin/manager enqueue:list --queue=queue_name
+./bin/manager enqueue:list --queue=queue_name --project_root=/path/to/project/root
 ```
 ### 2.2 Add new Job
 ```
-./bin/manager enqueue:add --queue=queue_name --class=job_class_name --parameters=job_args
+./bin/manager enqueue:add --queue=queue_name --class=job_class_name --parameters=job_args --project_root=/path/to/project/root
 ```
 
 ### 2.3 Remove a job from queue
 ```
-./bin/manager enqueue:remove --queue=queue_name --taskId=task_id
+./bin/manager enqueue:remove --queue=queue_name --taskId=task_id --project_root=/path/to/project/root
 ```
 
 ## 3. Jobs

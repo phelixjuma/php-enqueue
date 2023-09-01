@@ -7,12 +7,16 @@ use Phelixjuma\Enqueue\Manager;
 use Phelixjuma\Enqueue\RedisQueue;
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(dirname(__DIR__));
+$options = getopt('', ['project_root:']);
+$projectRoot = $options['project_root'] ?? dirname(__DIR__);
+
+$dotenv = Dotenv::createImmutable($projectRoot);
 $dotenv->load();
 
-$redisHost = getenv('REDIS_HOST');
-$redisPort = getenv('REDIS_PORT');
-$redis = new Predis\Client("tcp://127.0.0.1:6379");
+$redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? "");
+$redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? "");
+
+$redis = new Predis\Client("tcp://$redisHost:$redisPort");
 
 $queue = new RedisQueue($redis);
 

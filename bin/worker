@@ -11,21 +11,22 @@ use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
-$dotenv = Dotenv::createImmutable(dirname(__DIR__));
-$dotenv->load();
-
-$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:']);
+$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:', 'project_root:']);
 
 $concurrency = isset($options['concurrency']) ? (int) $options['concurrency'] : 1;
 $queueName = $options['queue'] ?? null;
 $logPath = $options['log_path'] ?? null;
 $logLevel = $options['log_level'] ?? null;
 $maxRetries = $options['max_retries'] ?? null;
+$projectRoot = $options['project_root'] ?? dirname(__DIR__);
 
+$dotenv = Dotenv::createImmutable($projectRoot);
+$dotenv->load();
 
-$redisHost = getenv('REDIS_HOST');
-$redisPort = getenv('REDIS_PORT');
-$redis = new Client('tcp://127.0.0.1:6379');
+$redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? "");
+$redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? "");
+
+$redis = new Client("tcp://$redisHost:$redisPort");
 
 $queue = new RedisQueue($redis, $queueName);
 $dispatcher = new EventDispatcher();

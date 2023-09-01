@@ -32,7 +32,13 @@ class ListCommand extends Command
             // the full command description shown when running the command with
             // the "--help" option
             ->setHelp('This command allows you to add tasks to the queue...')
-
+            ->addOption(
+                'project_root',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The path to the project root',
+                'default'
+            )
             // configure the queue option
             ->addOption(
                 'queue',
