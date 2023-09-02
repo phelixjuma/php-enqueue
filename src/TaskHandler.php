@@ -49,8 +49,10 @@ class TaskHandler implements ParallelTask
             $this->logger->info('Executing task');
 
             $job->setUp($this->task);
-            $job->perform($this->task);
+            $response = $job->perform($this->task);
             $job->tearDown($this->task);
+
+            $this->logger->info('Completed task with response: '.(!empty($response) ? json_encode($response): ""));
 
             $this->task->setStatus('completed');
 
@@ -59,6 +61,7 @@ class TaskHandler implements ParallelTask
         } catch (\Exception $e) {
 
             $this->logger->error('Failed with error', ['error' => $e->getMessage()]);
+
             $this->task->setStatus('failed');
 
             $this->dispatcher->dispatch(new TaskEvent($this->task), 'task.failed');
