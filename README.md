@@ -126,8 +126,6 @@ NB: A better approach would be to have an enqueue service that wraps php-enqueue
 
 namespace \Some\Name\Space\Service;
 
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
 use Phelixjuma\Enqueue\Jobs\EmailJob;
 use Phelixjuma\Enqueue\RedisQueue;
 use Phelixjuma\Enqueue\Task;
@@ -188,7 +186,7 @@ final class EnqueueService {
 }
 
 // Use the service within your application to add a job to a queue as
-EnqueueService::enqueue(new EmailJob(), ['key' => 'value']);
+EnqueueService::enqueue(new EmailJob(), ['email' => 'test@gmail.com', 'subject' => 'php-enqueue works!', 'message' => 'Thank you for this amazing package']);
 ```
 
 ## 4. A note On Jobs
