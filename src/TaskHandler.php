@@ -40,6 +40,10 @@ class TaskHandler implements ParallelTask
     public function run(Channel $channel, Cancellation $cancellation): string
     {
 
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
         $this->logger->info('Running task');
 
         $job = $this->task->getJob();
@@ -58,7 +62,7 @@ class TaskHandler implements ParallelTask
 
             $this->dispatcher->dispatch(new TaskEvent($this->task), 'task.completed');
 
-        } catch (\Exception $e) {
+        } catch (\Exception | \Throwable  $e) {
 
             $this->logger->error('Failed with error', ['error' => $e->getMessage()]);
 
@@ -82,6 +86,9 @@ class TaskHandler implements ParallelTask
             }
 
         }
+
+        $this->logger->info('Execution Status '.$this->task->getStatus());
+
         return $this->task->getStatus();
     }
 }
