@@ -52,8 +52,13 @@ class TaskHandler implements ParallelTask
 
             $this->logger->info('Executing task');
 
+            $this->logger->info('Calling setUp method');
             $job->setUp($this->task);
+
+            $this->logger->info('Calling perform method');
             $response = $job->perform($this->task);
+
+            $this->logger->info('Calling tearDown method');
             $job->tearDown($this->task);
 
             $this->logger->info('Completed task with response: '.(!empty($response) ? json_encode($response): ""));
