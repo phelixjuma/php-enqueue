@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-$autoloadFile = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadFile = getcwd() . '/vendor/autoload.php';
 
 if (!file_exists($autoloadFile)) {
     throw new \Exception('Autoload file not found');
