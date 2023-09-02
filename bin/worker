@@ -6,6 +6,7 @@ $autoloadFile = getcwd() . '/vendor/autoload.php';
 if (!file_exists($autoloadFile)) {
     throw new \Exception('Autoload file not found');
 }
+require $autoloadFile;
 
 use Phelixjuma\Enqueue\Worker;
 use Phelixjuma\Enqueue\RedisQueue;
