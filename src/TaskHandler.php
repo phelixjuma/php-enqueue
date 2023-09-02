@@ -39,61 +39,6 @@ class TaskHandler implements ParallelTask
      */
     public function run(Channel $channel, Cancellation $cancellation): string
     {
-
-        ini_set('display_errors', 1);
-        ini_set('display_startup_errors', 1);
-        error_reporting(E_ALL);
-
-        $this->logger->info('Running task');
-
-        $job = $this->task->getJob();
-
-        try {
-
-            $this->logger->info('Executing task');
-
-            $this->logger->info('Calling setUp method');
-            $job->setUp($this->task);
-
-            $this->logger->info('Calling perform method');
-            $response = $job->perform($this->task);
-
-            $this->logger->info('Calling tearDown method');
-            $job->tearDown($this->task);
-
-            $this->logger->info('Completed task with response: '.(!empty($response) ? json_encode($response): ""));
-
-            $this->task->setStatus('completed');
-
-            $this->dispatcher->dispatch(new TaskEvent($this->task), 'task.completed');
-
-        } catch (\Exception | \Throwable  $e) {
-
-            $this->logger->error('Failed with error', ['error' => $e->getMessage()]);
-
-            $this->task->setStatus('failed');
-
-            $this->dispatcher->dispatch(new TaskEvent($this->task), 'task.failed');
-
-            $retries = $this->task->getRetries();
-
-            if ($retries < $this->maxRetries) {
-
-                $this->task->setRetries($retries + 1);
-
-                // Requeue the task
-                $this->queue->enqueue($this->task);
-
-                $this->logger->info('Task requeued', ['retries' => $retries + 1]);
-
-            } else {
-                $this->logger->info('Task retries exhausted', ['retries' => $retries]);
-            }
-
-        }
-
-        $this->logger->info('Execution Status '.$this->task->getStatus());
-
-        return $this->task->getStatus();
+        return $this->task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
     }
 }
