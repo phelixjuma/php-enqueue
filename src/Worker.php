@@ -47,13 +47,13 @@ class Worker
                 $task->setStatus('processing');
 
                 // Option 1: Use this for blocking execution
-                $task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
+                //$task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
 
                 // Option 2: Use this for non-blocking execution
 
-                //$worker = createWorker();
-                //$parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
-                //$execution = $worker->submit($parallelTask);
+                $worker = createWorker();
+                $parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
+                $execution = $worker->submit($parallelTask);
             }
 
             usleep(100000); // sleep for 0.1 seconds
