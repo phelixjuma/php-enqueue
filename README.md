@@ -34,15 +34,16 @@ Job execution is done concurrently using amphp/parallel package which allows for
 
 To set up a worker, run the command below:
 ```
-./bin/worker --queue=name_of_queue --concurrency=1 --max_retries=3 --log_path=/path/to/log log_level=100
+./bin/worker --queue=name_of_queue --threaded=1 --concurrency=1 --max_retries=3 --log_path=/path/to/log log_level=100
 ```
 
 Note that the worker takes parameters such us:
 1. queue: The name of the queue the worker listens to. Each worker can only listen to a single queue. This allows you to have multiple workers handling different queues which introduces a level of parallelization in your job execution
-2. concurrency: Defines the number of concurrent jobs a single worker can handle at a given time
-3. max_retries: If a job fails, typically by throwing an exception, it will be retried to a max number of times defined here. By default, no retry is done
-4. log_path: The path to the directory where logs should be put. Specify a directory path not a log file and ensure php has permissions to write to that directory
-5. log_level: As per the monolog log levels
+2. threaded: Value of 1 means the jobs will be run in multi-threaded manner (non blocking). 0 means the jobs are run in a blocking manner. Use multi-threaded if your jobs do not depend on any global variables, otherwise, use set it to 0 (blocking execution)
+3. concurrency: Defines the number of concurrent jobs a single worker can handle at a given time
+4. max_retries: If a job fails, typically by throwing an exception, it will be retried to a max number of times defined here. By default, no retry is done
+5. log_path: The path to the directory where logs should be put. Specify a directory path not a log file and ensure php has permissions to write to that directory
+6. log_level: As per the monolog log levels
 
 NB: 
 1. You can use a service like supervisord to run the workers and to watch them so that, if the worker itself fails, it can be automatically restarted.

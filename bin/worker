@@ -16,13 +16,14 @@ use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
-$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:']);
+$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:', 'threaded:']);
 
 $concurrency = isset($options['concurrency']) ? (int) $options['concurrency'] : 1;
 $queueName = $options['queue'] ?? null;
 $logPath = $options['log_path'] ?? null;
 $logLevel = $options['log_level'] ?? null;
 $maxRetries = $options['max_retries'] ?? null;
+$threaded = $options['threaded'] ?? null;
 
 $dotenv = Dotenv::createImmutable(getcwd());
 $dotenv->load();
@@ -39,5 +40,5 @@ $dispatcher = new EventDispatcher();
 $log = new Logger($queueName);
 $log->pushHandler(new StreamHandler($logPath.'/'.$queueName.'.log', Logger::DEBUG));
 
-$worker = new Worker($queue, $concurrency, $maxRetries,  $dispatcher, $log);
+$worker = new Worker($queue, $threaded, $concurrency, $maxRetries,  $dispatcher, $log);
 $worker->start();

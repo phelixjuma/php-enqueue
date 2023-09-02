@@ -62,26 +62,18 @@ class Task
      * @param $maxRetries
      * @return string
      */
-    public function execute(RedisQueue $queue, LoggerInterface $logger, EventDispatcherInterface $dispatcher, $maxRetries=1) {
-
-        $logger->info('Running task');
+    public function execute(RedisQueue $queue, LoggerInterface $logger, EventDispatcherInterface $dispatcher, $maxRetries=1): string
+    {
 
         $job = $this->getJob();
 
         try {
 
-            $logger->info('Executing task');
-
-            $logger->info('Calling setUp method');
             $job->setUp($this);
 
-            $logger->info('Calling perform method');
-            $response = $job->perform($this);
+            $job->perform($this);
 
-            $logger->info('Calling tearDown method');
             $job->tearDown($this);
-
-            $logger->info('Completed task with response: '.(!empty($response) ? json_encode($response): ""));
 
             $this->setStatus('completed');
 
@@ -104,15 +96,8 @@ class Task
                 // Requeue the task
                 $queue->enqueue($this);
 
-                $logger->info('Task requeued', ['retries' => $retries + 1]);
-
-            } else {
-                $logger->info('Task retries exhausted', ['retries' => $retries]);
             }
-
         }
-
-        $logger->info('Execution Status '.$this->getStatus());
 
         return $this->getStatus();
 

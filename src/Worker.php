@@ -12,22 +12,25 @@ class Worker
     private EventDispatcherInterface $dispatcher;
     private int $concurrency;
     private int $maxRetries;
+    private $threaded;
     private LoggerInterface $logger;
 
     /**
      * @param RedisQueue $queue
+     * @param $threaded
      * @param $concurrency
      * @param $maxRetries
      * @param EventDispatcherInterface $dispatcher
      * @param LoggerInterface $logger
      */
-    public function __construct(RedisQueue $queue, $concurrency, $maxRetries, EventDispatcherInterface $dispatcher, LoggerInterface $logger)
+    public function __construct(RedisQueue $queue, $threaded, $concurrency, $maxRetries, EventDispatcherInterface $dispatcher, LoggerInterface $logger)
     {
         $this->queue = $queue;
         $this->dispatcher = $dispatcher;
         $this->logger = $logger;
         $this->concurrency = $concurrency;
         $this->maxRetries = $maxRetries;
+        $this->threaded = $threaded;
     }
 
     public function start()
@@ -42,18 +45,29 @@ class Worker
             if ($task instanceof Task) {
 
                 $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
-                $this->logger->info('Task fetched');
 
                 $task->setStatus('processing');
 
-                // Option 1: Use this for blocking execution
-                //$task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
+                if ($this->threaded == 1) {
 
-                // Option 2: Use this for non-blocking execution
+                    /**
+                     * Option 1: Use this for non-blocking execution.
+                     * Ideal only if your Jobs do not depend on other global variables wirthin the application
+                     */
+                    $worker = createWorker();
+                    $parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
+                    $worker->submit($parallelTask);
 
-                $worker = createWorker();
-                $parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
-                $execution = $worker->submit($parallelTask);
+                } else {
+
+                    /**
+                     * Option 2: Use this for blocking execution
+                     * Ideal for cases where the Jobs depend on global variables
+                     */
+                    $task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
+
+                }
+
             }
 
             usleep(100000); // sleep for 0.1 seconds
