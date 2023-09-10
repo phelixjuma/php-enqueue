@@ -83,6 +83,7 @@ class Task
         } catch (\Exception | \Throwable  $e) {
 
             $logger->error('Failed with error', ['error' => $e->getMessage()]);
+            $logger->error('Error trace', ['error' => $e->getTrace()]);
 
             $this->setStatus('failed');
 
