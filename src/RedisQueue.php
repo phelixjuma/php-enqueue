@@ -45,7 +45,7 @@ class RedisQueue
     public function fetch()
     {
         // Fetch the next task from the Redis queue
-        $taskData = $this->client->rpop($this->queue_name);
+        $taskData = $this->client->lpop($this->queue_name);
         return $taskData ? unserialize($taskData) : null;
     }
 

@@ -70,10 +70,8 @@ class Worker
 
             }
 
-            usleep(100000); // sleep for 0.1 seconds
+            usleep(1000000); // sleep for 1 second
         }
-
-        $pool->shutdown();
 
         $this->dispatcher->dispatch(new WorkerEvent($this), 'worker.finished');
         $this->logger->info('Worker Finished');
