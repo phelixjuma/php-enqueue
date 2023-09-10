@@ -65,7 +65,8 @@ class Task
     public function execute(RedisQueue $queue, LoggerInterface $logger, EventDispatcherInterface $dispatcher, $maxRetries=1): string
     {
 
-        $job = $this->getJob();
+        $jobInstance = $this->getJob();
+        $job = clone $jobInstance;
 
         try {
 
