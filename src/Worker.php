@@ -45,6 +45,7 @@ class Worker
             if ($task instanceof Task) {
 
                 $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
+                $this->logger->info('Fetched Task');
 
                 $task->setStatus('processing');
 
@@ -70,7 +71,7 @@ class Worker
 
             }
 
-            usleep(1000000); // sleep for 1 second
+            usleep(100000); // sleep for 0.1 second
         }
 
         $this->dispatcher->dispatch(new WorkerEvent($this), 'worker.finished');

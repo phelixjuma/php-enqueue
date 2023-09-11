@@ -70,14 +70,18 @@ class Task
 
         try {
 
+            $logger->info('Running set up');
             $job->setUp($this);
 
+            $logger->info('Running perform');
             $job->perform($this);
 
+            $logger->info('Running tear down');
             $job->tearDown($this);
 
             $this->setStatus('completed');
 
+            $logger->info('Task completed');
             $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
 
         } catch (\Exception | \Throwable  $e) {
@@ -96,6 +100,7 @@ class Task
                 $this->setRetries($retries + 1);
 
                 // Requeue the task
+                $logger->info('Re-enqueueing the task');
                 $queue->enqueue($this);
 
             }
