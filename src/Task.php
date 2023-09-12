@@ -70,21 +70,30 @@ class Task
 
         try {
 
+            // Run set up
             $logger->info('Running set up');
             $job->setUp($this);
 
+            // Actual task execution
             $logger->info('Running perform');
             $job->perform($this);
 
+            // Run tear down
             $logger->info('Running tear down');
             $job->tearDown($this);
 
             $this->setStatus('completed');
 
+            // Success. We acknowdge
+            $queue->acknowledge($this);
+
             $logger->info('Task completed');
             $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
 
         } catch (\Exception | \Throwable  $e) {
+
+            // Failed, we mark as failed
+            $queue->fail($this);
 
             $logger->error('Failed with error', ['error' => $e->getMessage()]);
             $logger->error('Error trace', ['error' => $e->getTrace()]);

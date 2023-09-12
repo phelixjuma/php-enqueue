@@ -1,4 +1,5 @@
 <?php
+
 namespace Phelixjuma\Enqueue;
 
 use Predis\Client;
@@ -7,79 +8,125 @@ class RedisQueue
 {
     private Client $client;
     private $queue_name;
+    private $reserved_queue_name;
+    private $failed_queue_name;
 
     public function __construct(Client $client, $queueName = 'default')
     {
         $this->client = $client;
         $this->queue_name = $queueName;
+        $this->reserved_queue_name = $queueName . ':reserved';
+        $this->failed_queue_name = $queueName . ':failed';
     }
 
-    /**
-     * @param $name
-     * @return $this
-     */
     public function setName($name): RedisQueue
     {
-
         $this->queue_name = $name;
-
+        $this->reserved_queue_name = $name . ':reserved';
+        $this->failed_queue_name = $name . ':failed';
         return $this;
     }
 
     public function enqueue(Task $task)
     {
-        $this->client->rpush($this->queue_name, [serialize($task), '']);
-    }
-
-    public function dequeue()
-    {
-        $serializedTask = $this->client->lpop($this->queue_name);
-
-        if ($serializedTask) {
-            return unserialize($serializedTask);
-        }
-
-        return null;
+        $this->client->rpush($this->queue_name, [serialize($task),'']);
     }
 
     public function fetch()
     {
-        // Fetch the next task from the Redis queue
-        $taskData = $this->client->lpop($this->queue_name);
-
-        if (!empty($taskData)) {
-
-            print "Got task, unserialized: $taskData\n";
-
-            $unserializedTask = $taskData ? unserialize($taskData) : null;
-
-            print "serialized task: \n";
-            print_r($unserializedTask);
-            print "\n";
-
-            return $unserializedTask;
-        }
-        return null;
+        $serializedTask = $this->client->brpoplpush($this->queue_name, $this->reserved_queue_name, 0);
+        return $serializedTask ? unserialize($serializedTask) : null;
     }
 
-    public function add(Task $task)
+    public function acknowledge(Task $task)
     {
-        // Add a task to the Redis queue
-        $this->client->lpush($this->queue_name, [serialize($task)]);
+        $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
     }
 
-    public function list()
+    public function fail(Task $task)
     {
-        // List all tasks in the Redis queue
+        // Remove from reserved and add to failed queue
+        $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
+        $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
+    }
+
+    public function list(): array
+    {
         return array_map(function($data) {
             return unserialize($data);
         }, $this->client->lrange($this->queue_name, 0, -1));
     }
 
+    public function getFailedJobs(): array
+    {
+        return array_map(function($data) {
+            return $data ? unserialize($data) : null;
+        }, $this->client->lrange($this->failed_queue_name, 0, -1));
+    }
+
     public function remove(Task $task)
     {
-        // Remove a task from the Redis queue
-        // This method removes all occurrences of the task in the queue
         $this->client->lrem($this->queue_name, 0, serialize($task));
     }
+
+    public function getReservedJobs(): array
+    {
+
+        return array_map(function($data) {
+            return $data ? unserialize($data) : null;
+        }, $this->client->lrange($this->reserved_queue_name, 0, -1));
+
+    }
+
+    /**
+     * @param $timeoutInSeconds
+     * @return void
+     */
+    public function handleStuckTasks($timeoutInSeconds)
+    {
+        $reservedTasks = $this->getReservedJobs();
+
+        $currentTime = time();
+
+        foreach ($reservedTasks as $task) {
+
+            if ($task instanceof Task) {
+
+                if (($task->getCreatedAt() + $timeoutInSeconds) < $currentTime) {
+
+                    // The task has been in the reserved queue for longer than the timeout
+
+                    // Requeue the task
+                    $this->enqueue($task);
+
+                    // Remove the task from the reserved queue
+                    $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
+                }
+            }
+        }
+    }
+
+    /**
+     * @return void
+     */
+    public function requeueFailedJobs()
+    {
+        $failedJobs = $this->getFailedJobs();
+
+        foreach ($failedJobs as $task) {
+
+            if ($task instanceof Task) {
+
+                // Requeue the task to the main queue
+                $this->enqueue($task);
+
+                // Remove the task from the failed queue
+                $this->client->lrem($this->failed_queue_name, 1, serialize($task));
+
+            }
+
+        }
+    }
+
+
 }
