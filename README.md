@@ -66,6 +66,21 @@ You have options to manage tasks in the command line.
 ./bin/manager enqueue:remove --queue=queue_name --taskId=task_id
 ```
 
+### 2.4 List failed jobs
+```
+./bin/manager enqueue:failed:list --queue=queue_name
+```
+
+### 2.5 Requeue failed jobs
+```
+./bin/manager enqueue:failed:requeue --queue=queue_name
+```
+
+### 2.6 Remove all failed jobs
+```
+./bin/manager enqueue:failed:purge --queue=queue_name
+```
+
 ## 3. Jobs
 
 Every job class implement JobInterface. The classes to define are: 

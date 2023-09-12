@@ -1,6 +1,9 @@
 <?php
 namespace Phelixjuma\Enqueue;
 
+use Phelixjuma\Enqueue\Commands\ListFailedJobsCommand;
+use Phelixjuma\Enqueue\Commands\PurgeFailedCommand;
+use Phelixjuma\Enqueue\Commands\RequeueFailedCommand;
 use Symfony\Component\Console\Application;
 use Phelixjuma\Enqueue\Commands\AddCommand;
 use Phelixjuma\Enqueue\Commands\ListCommand;
@@ -20,6 +23,9 @@ class Manager extends Application
             new AddCommand($this->queue),
             new ListCommand($this->queue),
             new RemoveCommand($this->queue),
+            new ListFailedJobsCommand($this->queue),
+            new RequeueFailedCommand($this->queue),
+            new PurgeFailedCommand($this->queue),
         ]);
     }
 }

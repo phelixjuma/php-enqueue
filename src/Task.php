@@ -92,7 +92,6 @@ class Task
                 $this->setRetries($retries + 1);
 
                 // Requeue the task
-                $logger->info('Re-enqueueing the task');
                 $queue->enqueue($this);
 
             } else {

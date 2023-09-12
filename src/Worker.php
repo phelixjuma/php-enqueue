@@ -39,7 +39,6 @@ class Worker
     public function start()
     {
         $this->dispatcher->dispatch(new WorkerEvent($this), 'worker.start');
-        $this->logger->info('Worker started');
 
         while (true) {
 
@@ -52,8 +51,6 @@ class Worker
                     if ($task instanceof Task) {
 
                         $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
-
-                        $this->logger->info('Fetched Task');
 
                         $task->setStatus('processing');
 
@@ -91,7 +88,6 @@ class Worker
         }
 
         $this->dispatcher->dispatch(new WorkerEvent($this), 'worker.finished');
-        $this->logger->info('Worker Finished');
     }
 
 }

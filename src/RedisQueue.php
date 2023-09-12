@@ -87,5 +87,18 @@ class RedisQueue
         }
     }
 
+    /**
+     * @return void
+     */
+    public function removeAllFailedJobs()
+    {
+        $failedJobs = $this->getFailedJobs();
+
+        foreach ($failedJobs as $task) {
+            $this->removeFromFailedQueue($task);
+
+        }
+    }
+
 
 }
