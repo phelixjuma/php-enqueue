@@ -33,6 +33,9 @@ class Worker
         $this->threaded = $threaded;
     }
 
+    /**
+     * @return mixed
+     */
     public function start()
     {
         $this->dispatcher->dispatch(new WorkerEvent($this), 'worker.start');
@@ -40,35 +43,49 @@ class Worker
 
         while (true) {
 
-            $task = $this->queue->fetch();
+            try {
 
-            if ($task instanceof Task) {
+                $task = $this->queue->fetch();
 
-                $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
-                $this->logger->info('Fetched Task');
+                print "Got task:\n";
+                print_r($task);
+                print "\n";
 
-                $task->setStatus('processing');
+                if ($task instanceof Task) {
 
-                if ($this->threaded == 1) {
+                    print "dispatching task.fetched event\n";
 
-                    /**
-                     * Option 1: Use this for non-blocking execution.
-                     * Ideal only if your Jobs do not depend on other global variables wirthin the application
-                     */
-                    $worker = createWorker();
-                    $parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
-                    $worker->submit($parallelTask);
+                    $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
+                    print "dispatched task.fetched event";
 
-                } else {
+                    $this->logger->info('Fetched Task');
 
-                    /**
-                     * Option 2: Use this for blocking execution
-                     * Ideal for cases where the Jobs depend on global variables
-                     */
-                    $task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
+                    $task->setStatus('processing');
+
+                    if ($this->threaded == 1) {
+
+                        /**
+                         * Option 1: Use this for non-blocking execution.
+                         * Ideal only if your Jobs do not depend on other global variables wirthin the application
+                         */
+                        $worker = createWorker();
+                        $parallelTask = new TaskHandler($this->queue, $task, $this->logger, $this->dispatcher, $this->maxRetries);
+                        $worker->submit($parallelTask);
+
+                    } else {
+
+                        /**
+                         * Option 2: Use this for blocking execution
+                         * Ideal for cases where the Jobs depend on global variables
+                         */
+                        $task->execute($this->queue, $this->logger, $this->dispatcher, $this->maxRetries);
+
+                    }
 
                 }
 
+            } catch (\Exception | \Throwable  $e) {
+                print "Task failed with ".$e->getMessage();
             }
 
             usleep(100000); // sleep for 0.1 second
