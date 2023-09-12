@@ -77,7 +77,13 @@ class Worker
 
                         }
 
+                    } else {
+                        // We fail invalid tasks
+                        $this->queue->fail($task);
                     }
+                } else {
+                    // We remove empty queues from reserve
+                    $this->queue->removeFromReserveQueue($task);
                 }
 
             } catch (\Exception | \Throwable  $e) {

@@ -80,8 +80,8 @@ class Task
             $job->tearDown($this);
 
             // Success. We acknowledge
-            $logger->info("Acknowledging success: ".serialize($this));
-            $queue->acknowledge($this);
+            $logger->info("Removing from reserve: ".serialize($this));
+            $queue->removeFromReserveQueue($this);
 
             // Update status to completed
             $this->setStatus('completed');

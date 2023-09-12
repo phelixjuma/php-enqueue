@@ -45,7 +45,7 @@ class RemoveCommand extends Command
         $queueName = $input->getOption('queue');
         $taskId = $input->getOption('taskId');
 
-        $this->queue->setName($queueName)->remove($taskId);
+        $this->queue->setName($queueName)->removeFromQueue($taskId);
 
         $output->writeln("<info>Task with ID $taskId removed from the queue</info>");
         return 0;

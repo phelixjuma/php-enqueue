@@ -37,12 +37,7 @@ class RedisQueue
         $serializedTask = $this->client->brpoplpush($this->queue_name, $this->reserved_queue_name, 0);
         return $serializedTask ? unserialize($serializedTask) : null;
     }
-
-    public function acknowledge(Task $task)
-    {
-        $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
-    }
-
+    
     public function fail(Task $task)
     {
         // Remove from reserved and add to failed queue
@@ -64,9 +59,19 @@ class RedisQueue
         }, $this->client->lrange($this->failed_queue_name, 0, -1));
     }
 
-    public function remove(Task $task)
+    public function removeFromQueue(Task $task)
     {
         $this->client->lrem($this->queue_name, 0, serialize($task));
+    }
+
+    public function removeFromFailedQueue(Task $task)
+    {
+        $this->client->lrem($this->failed_queue_name, 0, serialize($task));
+    }
+
+    public function removeFromReserveQueue(Task $task)
+    {
+        $this->client->lrem($this->reserved_queue_name, 0, serialize($task));
     }
 
     public function getReservedJobs(): array
