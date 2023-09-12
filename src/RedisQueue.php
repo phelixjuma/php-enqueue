@@ -8,21 +8,18 @@ class RedisQueue
 {
     private Client $client;
     private $queue_name;
-    private $reserved_queue_name;
-    private $failed_queue_name;
+    private string $failed_queue_name;
 
     public function __construct(Client $client, $queueName = 'default')
     {
         $this->client = $client;
         $this->queue_name = $queueName;
-        $this->reserved_queue_name = $queueName . ':reserved';
         $this->failed_queue_name = $queueName . ':failed';
     }
 
     public function setName($name): RedisQueue
     {
         $this->queue_name = $name;
-        $this->reserved_queue_name = $name . ':reserved';
         $this->failed_queue_name = $name . ':failed';
         return $this;
     }
@@ -32,17 +29,16 @@ class RedisQueue
         $this->client->rpush($this->queue_name, [serialize($task),'']);
     }
 
-    public function fetch()
-    {
-        $serializedTask = $this->client->brpoplpush($this->queue_name, $this->reserved_queue_name, 0);
-        return $serializedTask ? unserialize($serializedTask) : null;
-    }
-    
     public function fail(Task $task)
     {
-        // Remove from reserved and add to failed queue
-        $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
+        // We add the task to the failed queue
         $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
+    }
+
+    public function fetch()
+    {
+        $serializedTask = $this->client->lpop($this->queue_name);
+        return $serializedTask ? unserialize($serializedTask) : null;
     }
 
     public function list(): array
@@ -67,48 +63,6 @@ class RedisQueue
     public function removeFromFailedQueue(Task $task)
     {
         $this->client->lrem($this->failed_queue_name, 0, serialize($task));
-    }
-
-    public function removeFromReserveQueue(Task $task)
-    {
-        $this->client->lrem($this->reserved_queue_name, 0, serialize($task));
-    }
-
-    public function getReservedJobs(): array
-    {
-
-        return array_map(function($data) {
-            return $data ? unserialize($data) : null;
-        }, $this->client->lrange($this->reserved_queue_name, 0, -1));
-
-    }
-
-    /**
-     * @param $timeoutInSeconds
-     * @return void
-     */
-    public function handleStuckTasks($timeoutInSeconds)
-    {
-        $reservedTasks = $this->getReservedJobs();
-
-        $currentTime = time();
-
-        foreach ($reservedTasks as $task) {
-
-            if ($task instanceof Task) {
-
-                if (($task->getCreatedAt() + $timeoutInSeconds) < $currentTime) {
-
-                    // The task has been in the reserved queue for longer than the timeout
-
-                    // Requeue the task
-                    $this->enqueue($task);
-
-                    // Remove the task from the reserved queue
-                    $this->client->lrem($this->reserved_queue_name, 1, serialize($task));
-                }
-            }
-        }
     }
 
     /**

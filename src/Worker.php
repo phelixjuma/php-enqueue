@@ -34,7 +34,7 @@ class Worker
     }
 
     /**
-     * @return mixed
+     * @return void
      */
     public function start()
     {
@@ -81,9 +81,6 @@ class Worker
                         // We fail invalid tasks
                         $this->queue->fail($task);
                     }
-                } else {
-                    // We remove empty queues from reserve
-                    $this->queue->removeFromReserveQueue($task);
                 }
 
             } catch (\Exception | \Throwable  $e) {

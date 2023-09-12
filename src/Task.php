@@ -79,10 +79,6 @@ class Task
             // Run tear down
             $job->tearDown($this);
 
-            // Success. We acknowledge
-            $logger->info("Removing from reserve: ".serialize($this));
-            $queue->removeFromReserveQueue($this);
-
             // Update status to completed
             $this->setStatus('completed');
             $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
