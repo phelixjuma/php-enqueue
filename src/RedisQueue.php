@@ -46,7 +46,20 @@ class RedisQueue
     {
         // Fetch the next task from the Redis queue
         $taskData = $this->client->lpop($this->queue_name);
-        return $taskData ? unserialize($taskData) : null;
+
+        if (!empty($taskData)) {
+
+            print "Got task, unserialized: $taskData\n";
+
+            $unserializedTask = $taskData ? unserialize($taskData) : null;
+
+            print "serialized task: \n";
+            print_r($unserializedTask);
+            print "\n";
+
+            return $unserializedTask;
+        }
+        return null;
     }
 
     public function add(Task $task)

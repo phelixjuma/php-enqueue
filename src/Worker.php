@@ -48,16 +48,13 @@ class Worker
                 $task = $this->queue->fetch();
 
                 if (!empty($task)) {
-                    print "Got task:\n";
-                    print_r($task);
-                    print "\n";
 
                     if ($task instanceof Task) {
 
                         print "dispatching task.fetched event\n";
 
                         $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
-                        print "dispatched task.fetched event";
+                        print "dispatched task.fetched event\n";
 
                         $this->logger->info('Fetched Task');
 
