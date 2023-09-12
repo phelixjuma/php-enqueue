@@ -71,37 +71,23 @@ class Task
         try {
 
             // Run set up
-            $logger->info('Running set up');
             $job->setUp($this);
 
             // Actual task execution
-            $logger->info('Running perform');
             $job->perform($this);
 
             // Run tear down
-            $logger->info('Running tear down');
             $job->tearDown($this);
 
             // Success. We acknowledge
+            $logger->info("Acknowledging success: ".serialize($this));
             $queue->acknowledge($this);
 
             // Update status to completed
             $this->setStatus('completed');
-
-            $logger->info('Task completed');
             $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
 
         } catch (\Exception | \Throwable  $e) {
-
-            // Failed, we mark as failed
-            $queue->fail($this);
-
-            $logger->error('Failed with error', ['error' => $e->getMessage()]);
-            $logger->error('Error trace', ['error' => $e->getTrace()]);
-
-            $this->setStatus('failed');
-
-            $dispatcher->dispatch(new TaskEvent($this), 'task.failed');
 
             $retries = $this->getRetries();
 
@@ -112,6 +98,17 @@ class Task
                 // Requeue the task
                 $logger->info('Re-enqueueing the task');
                 $queue->enqueue($this);
+
+            } else {
+
+                // Failed, we mark as failed
+                $queue->fail($this);
+
+                $logger->error('Failed with error', ['error' => $e->getMessage()]);
+
+                $this->setStatus('failed');
+
+                $dispatcher->dispatch(new TaskEvent($this), 'task.failed');
 
             }
         }

@@ -51,10 +51,7 @@ class Worker
 
                     if ($task instanceof Task) {
 
-                        print "dispatching task.fetched event\n";
-
                         $this->dispatcher->dispatch(new TaskEvent($task), 'task.fetched');
-                        print "dispatched task.fetched event\n";
 
                         $this->logger->info('Fetched Task');
 
@@ -84,7 +81,7 @@ class Worker
                 }
 
             } catch (\Exception | \Throwable  $e) {
-                print "Task failed with ".$e->getMessage();
+                $this->logger->error($e->getMessage());
             }
 
             usleep(100000); // sleep for 0.1 second
