@@ -82,10 +82,11 @@ class Task
             $logger->info('Running tear down');
             $job->tearDown($this);
 
-            $this->setStatus('completed');
-
-            // Success. We acknowdge
+            // Success. We acknowledge
             $queue->acknowledge($this);
+
+            // Update status to completed
+            $this->setStatus('completed');
 
             $logger->info('Task completed');
             $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
