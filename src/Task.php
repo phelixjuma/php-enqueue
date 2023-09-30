@@ -8,15 +8,25 @@ class Task
 {
     private $job;
     private $args;
+    protected $listenerDirectory;
+    protected $listenerNamespace;
     private $status;
     private $retries = 0;
     private $created_at;
 
-    public function __construct($job, $args = null)
+    /**
+     * @param $job
+     * @param $args
+     * @param $listenerDir
+     * @param $listenerNamespace
+     */
+    public function __construct($job, $args = null, $listenerDir = null, $listenerNamespace=null)
     {
         $this->job = $job;
         $this->args = $args;
         $this->status = 'pending';
+        $this->listenerDirectory = $listenerDir;
+        $this->listenerNamespace = $listenerNamespace;
         $this->created_at = new \DateTime();
     }
 
@@ -58,15 +68,17 @@ class Task
     /**
      * @param RedisQueue $queue
      * @param LoggerInterface $logger
-     * @param EventDispatcherInterface $dispatcher
      * @param $maxRetries
      * @return string
      */
-    public function execute(RedisQueue $queue, LoggerInterface $logger, EventDispatcherInterface $dispatcher, $maxRetries=1): string
+    public function execute(RedisQueue $queue, LoggerInterface $logger, $maxRetries=1): string
     {
 
-        $jobInstance = $this->getJob();
-        $job = clone $jobInstance;
+        $job = $this->getJob();
+
+        if (!$job instanceof JobInterface) {
+            throw new \InvalidArgumentException('The provided job is not an instance of JobInterface.');
+        }
 
         try {
 
@@ -81,7 +93,6 @@ class Task
 
             // Update status to completed
             $this->setStatus('completed');
-            $dispatcher->dispatch(new TaskEvent($this), 'task.completed');
 
         } catch (\Exception | \Throwable  $e) {
 
@@ -102,9 +113,6 @@ class Task
                 $logger->error('Failed with error', ['error' => $e->getMessage()]);
 
                 $this->setStatus('failed');
-
-                $dispatcher->dispatch(new TaskEvent($this), 'task.failed');
-
             }
         }
 

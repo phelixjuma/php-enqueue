@@ -11,7 +11,11 @@
     "amphp/parallel": "^2.2",
     "symfony/event-dispatcher": "^5.3",
     "psr/log":  "^3.0",
-    "monolog/monolog": "^3.4"
+    "monolog/monolog": "^3.4",
+    "doctrine/annotations": "^2.0"
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit"
   },
   "autoload": {
     "psr-4": {

@@ -11,7 +11,6 @@ require_once $autoloadFile;
 use Phelixjuma\Enqueue\Worker;
 use Phelixjuma\Enqueue\RedisQueue;
 use Predis\Client;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -34,11 +33,10 @@ $redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? "");
 $redis = new Client("tcp://$redisHost:$redisPort");
 
 $queue = new RedisQueue($redis, $queueName);
-$dispatcher = new EventDispatcher();
 
 // create a log channel
 $log = new Logger($queueName);
 $log->pushHandler(new StreamHandler($logPath.'/'.$queueName.'.log', Logger::DEBUG));
 
-$worker = new Worker($queue, $threaded, $concurrency, $maxRetries,  $dispatcher, $log);
+$worker = new Worker($queue, $threaded, $concurrency, $maxRetries, $log);
 $worker->start();

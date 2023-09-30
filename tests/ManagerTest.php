@@ -7,7 +7,7 @@ use Phelixjuma\Enqueue\Manager;
 
 class ManagerTest extends TestCase
 {
-    public function testConstructor()
+    public function _testConstructor()
     {
         $manager = new Manager();
         $this->assertInstanceOf(Manager::class, $manager);

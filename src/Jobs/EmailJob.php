@@ -4,9 +4,10 @@ namespace Phelixjuma\Enqueue\Jobs;
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Phelixjuma\Enqueue\JobInterface;
 use Phelixjuma\Enqueue\Task;
 
-class EmailJob
+class EmailJob implements JobInterface
 {
 
     /**
