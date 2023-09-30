@@ -60,10 +60,6 @@ class EventDiscovery {
                                         ? $eventNamespace . '\\' . $annotation->for
                                         : $annotation->for;
 
-                                    print "annotation for: ".$annotation->for."\n";
-                                    print "annotation: ".$listenerEvent."\n";
-                                    print "event class: ".$eventClass."\n";
-
                                     if ($listenerEvent === $eventClass) {
                                         $listeners[] = [$className, $method->getName()];
                                     }
