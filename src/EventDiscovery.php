@@ -36,7 +36,11 @@ class EventDiscovery {
      * @throws \ReflectionException
      */
     public function getListenersForEvent(string $eventClass): array {
+
         $listeners = [];
+
+        // Extract namespace from the event class
+        $eventNamespace = substr($eventClass, 0, strrpos($eventClass, '\\'));
 
         foreach ($this->directories as $index => $directory) {
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
@@ -53,8 +57,13 @@ class EventDiscovery {
 
                                 if ($annotation) {
                                     $listenerEvent = strpos($annotation->for, '\\') === false
-                                        ? $this->namespaces[$index] . '\\' . $annotation->for
+                                        ? $eventNamespace . '\\' . $annotation->for
                                         : $annotation->for;
+
+                                    print "annotation for: ".$annotation->for."\n";
+                                    print "annotation: ".$listenerEvent."\n";
+                                    print "event class: ".$eventClass."\n";
+
                                     if ($listenerEvent === $eventClass) {
                                         $listeners[] = [$className, $method->getName()];
                                     }

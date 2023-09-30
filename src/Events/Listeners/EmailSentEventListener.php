@@ -27,7 +27,7 @@ class EmailSentEventListener implements ListenerInterface
     }
 
     /**
-     * @Listener(for="Phelixjuma\Enqueue\Events\Events\EmailSentEvent")
+     * @Listener(for="EmailSentEvent")
      */
     public function logResponse(Event $event) {
         $this->logger->info("EmailSentListener::logResponse. Args: ".json_encode($event->getArgs()));
