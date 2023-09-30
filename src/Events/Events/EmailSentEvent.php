@@ -6,5 +6,6 @@ use Phelixjuma\Enqueue\EventInterface;
 
 class EmailSentEvent implements EventInterface
 {
+
 }
 

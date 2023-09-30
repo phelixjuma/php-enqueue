@@ -32,6 +32,9 @@ class EventDiscovery {
         return $this;
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     public function getListenersForEvent(string $eventClass): array {
         $listeners = [];
 
@@ -45,9 +48,16 @@ class EventDiscovery {
                         $reflectionClass = new ReflectionClass($className);
                         if (is_subclass_of($className, ListenerInterface::class)) {
                             foreach ($reflectionClass->getMethods() as $method) {
+
                                 $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
-                                if ($annotation && $annotation->for === $eventClass) {
-                                    $listeners[] = [$className, $method->getName()];
+
+                                if ($annotation) {
+                                    $listenerEvent = strpos($annotation->for, '\\') === false
+                                        ? $this->namespaces[$index] . '\\' . $annotation->for
+                                        : $annotation->for;
+                                    if ($listenerEvent === $eventClass) {
+                                        $listeners[] = [$className, $method->getName()];
+                                    }
                                 }
                             }
                         }
