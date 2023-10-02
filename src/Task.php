@@ -74,7 +74,7 @@ class Task
     public function execute(RedisQueue $queue, LoggerInterface $logger, $maxRetries=1): string
     {
 
-        $job = $this->getJob();
+        $job = clone $this->getJob();
 
         if (!$job instanceof JobInterface) {
             throw new \InvalidArgumentException('The provided job is not an instance of JobInterface.');
