@@ -103,7 +103,12 @@ class Task
                 $this->setRetries($retries + 1);
 
                 // Requeue the task
-                $queue->enqueue($this);
+                try {
+                    $queue->enqueue($this);
+                } catch (\Exception | \Throwable  $ex) {
+                    $logger->error($ex->getMessage());
+                    $logger->error($ex->getTraceAsString());
+                }
 
             } else {
 
