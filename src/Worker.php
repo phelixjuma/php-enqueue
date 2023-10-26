@@ -41,7 +41,7 @@ class Worker
      */
     public function start()
     {
-        $startTime = time();
+        $startTime = microtime(true);
         $doneJobs = 0;
 
         while (true) {
@@ -74,7 +74,7 @@ class Worker
             // Check if max time is set
             if (!empty($this->maxTime) && $this->maxTime > 0) {
 
-                if (((time() - $startTime)/1000) > $this->maxTime) {
+                if ((microtime(true) - $startTime) > $this->maxTime) {
                     $this->logger->error("Worker is exiting due to max time reached");
                     exit();
                 }

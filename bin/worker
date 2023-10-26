@@ -15,7 +15,7 @@ use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
-$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:', 'threaded:']);
+$options = getopt('', ['concurrency:', 'queue:', 'max_retries:', 'log_path:', 'log_level:', 'threaded:', 'max_time:', 'max_jobs:']);
 
 $concurrency = isset($options['concurrency']) ? (int) $options['concurrency'] : 1;
 $queueName = $options['queue'] ?? null;
