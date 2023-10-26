@@ -12,6 +12,8 @@ class Worker
     private int $concurrency;
     private int $maxRetries;
     private $threaded;
+    private $maxTime;
+    private $maxJobs;
     private LoggerInterface $logger;
 
     /**
@@ -19,15 +21,19 @@ class Worker
      * @param $threaded
      * @param $concurrency
      * @param $maxRetries
+     * @param $maxTime
+     * @param $maxJobs
      * @param LoggerInterface $logger
      */
-    public function __construct(RedisQueue $queue, $threaded, $concurrency, $maxRetries, LoggerInterface $logger)
+    public function __construct(RedisQueue $queue, $threaded, $concurrency, $maxRetries, $maxTime, $maxJobs, LoggerInterface $logger)
     {
         $this->queue = $queue;
         $this->logger = $logger;
         $this->concurrency = $concurrency;
         $this->maxRetries = $maxRetries;
         $this->threaded = $threaded;
+        $this->maxTime = $maxTime;
+        $this->maxJobs = $maxJobs;
     }
 
     /**
@@ -35,6 +41,9 @@ class Worker
      */
     public function start()
     {
+        $startTime = time();
+        $doneJobs = 0;
+
         while (true) {
 
             try {
@@ -49,6 +58,9 @@ class Worker
 
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
 
+                        // Increment jobs count
+                        $doneJobs++;
+
                     } else {
                         // We fail invalid tasks
                         $this->queue->fail($task);
@@ -59,7 +71,30 @@ class Worker
                 $this->logger->error($e->getMessage());
             }
 
-            usleep(100000); // sleep for 0.1 second
+            // Check if max time is set
+            if (!empty($this->maxTime) && $this->maxTime > 0) {
+                // Get the current time
+                $currentTime = time();
+
+                $elapsedTimeInSeconds = ($currentTime - $startTime)/1000;
+
+                if ($elapsedTimeInSeconds > $this->maxTime) {
+                    $this->logger->error("Worker is exiting due to max time reached");
+                    exit();
+                }
+            }
+
+            // Check if max jobs is set
+            if (!empty($this->maxJobs) && $this->maxJobs > 0) {
+
+                if ($doneJobs > $this->maxJobs) {
+                    $this->logger->error("Worker is exiting due to max number of jobs reached");
+                    exit();
+                }
+            }
+
+            // sleep for 0.1 second before proceeding.
+            usleep(100000);
         }
     }
 
