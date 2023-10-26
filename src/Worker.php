@@ -73,12 +73,8 @@ class Worker
 
             // Check if max time is set
             if (!empty($this->maxTime) && $this->maxTime > 0) {
-                // Get the current time
-                $currentTime = time();
 
-                $elapsedTimeInSeconds = ($currentTime - $startTime)/1000;
-
-                if ($elapsedTimeInSeconds > $this->maxTime) {
+                if (((time() - $startTime)/1000) > $this->maxTime) {
                     $this->logger->error("Worker is exiting due to max time reached");
                     exit();
                 }
