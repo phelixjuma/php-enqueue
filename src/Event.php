@@ -9,10 +9,10 @@ class Event extends Task {
     /**
      * @param RedisQueue $queue
      * @param LoggerInterface $logger
-     * @param $maxRetries
+     * @param int $maxRetries
      * @return string
      */
-    public function execute(RedisQueue $queue, LoggerInterface $logger, $maxRetries=1): string {
+    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1): string {
 
         $event = $this->getJob();
 

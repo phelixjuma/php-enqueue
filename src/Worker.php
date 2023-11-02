@@ -2,13 +2,11 @@
 
 namespace Phelixjuma\Enqueue;
 
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
-use function Amp\Parallel\Worker\createWorker;
 
 class Worker
 {
-    private RedisQueue $queue;
+    private QueueInterface $queue;
     private int $concurrency;
     private int $maxRetries;
     private $threaded;
@@ -17,21 +15,17 @@ class Worker
     private LoggerInterface $logger;
 
     /**
-     * @param RedisQueue $queue
-     * @param $threaded
-     * @param $concurrency
+     * @param QueueInterface $queue
      * @param $maxRetries
      * @param $maxTime
      * @param $maxJobs
      * @param LoggerInterface $logger
      */
-    public function __construct(RedisQueue $queue, $threaded, $concurrency, $maxRetries, $maxTime, $maxJobs, LoggerInterface $logger)
+    public function __construct(QueueInterface $queue, $maxRetries, $maxTime, $maxJobs, LoggerInterface $logger)
     {
         $this->queue = $queue;
         $this->logger = $logger;
-        $this->concurrency = $concurrency;
         $this->maxRetries = $maxRetries;
-        $this->threaded = $threaded;
         $this->maxTime = $maxTime;
         $this->maxJobs = $maxJobs;
     }
@@ -41,6 +35,19 @@ class Worker
      */
     public function start()
     {
+        if ($this->queue instanceof BeanstalkdQueue) {
+            $this->startBeanstalkdWorker();
+        } else {
+            $this->startRedisWorker();
+        }
+    }
+
+    /**
+     * @return void
+     */
+    private function startRedisWorker(): void
+    {
+
         $startTime = microtime(true);
         $doneJobs = 0;
 
@@ -68,7 +75,7 @@ class Worker
                 }
 
             } catch (\Exception | \Throwable  $e) {
-                $this->logger->error($e->getMessage());
+                $this->logger->error($e->getMessage()." on line ".$e->getLine(). " in ".$e->getFile()." Trace: ".$e->getTraceAsString());
             }
 
             // Check if max time is set
@@ -90,6 +97,87 @@ class Worker
             // sleep for 0.1 second before proceeding.
             usleep(100000);
         }
+
+    }
+
+    /**
+     * @return void
+     */
+    private function startBeanstalkdWorker(): void
+    {
+
+        $startTime = microtime(true);
+        $doneJobs = 0;
+
+        // We watch to get jobs from the set queue
+        $tube = $this->queue->getQueue();
+
+        while (true) {
+
+            $this->queue->getClient()->watch($tube);
+
+            // this hangs until a Job is produced.
+            $job = $this->queue->getClient()->reserve();
+
+            try {
+
+                // We get the task
+                $serializedTask = $job->getData();
+
+                // do work.
+                if (!empty($serializedTask)) {
+
+                    $task = unserialize($serializedTask);
+
+                    if ($task instanceof Task || $task instanceof Event) {
+
+                        $task->setStatus('processing');
+
+                        $task->execute($this->queue, $this->logger, $this->maxRetries);
+
+                        // Increment jobs count
+                        $doneJobs++;
+
+                    } else {
+                        // We fail invalid tasks
+                        $this->queue->fail($task);
+                    }
+                }
+
+                // eventually we're done, delete job.
+                $this->queue->getClient()->delete($job);
+
+
+            } catch (\Exception $e) {
+                // handle exception.
+                $this->logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
+
+                // and let some other worker retry.
+                $this->queue->getClient()->release($job);
+            }
+
+            // Check if max time is set
+            if (!empty($this->maxTime) && $this->maxTime > 0) {
+
+                if ((microtime(true) - $startTime) > $this->maxTime) {
+                    $this->logger->error("Exiting due to max time exceeded");
+                    exit();
+                }
+            }
+
+            // Check if max jobs is set
+            if (!empty($this->maxJobs) && $this->maxJobs > 0) {
+
+                if ($doneJobs > $this->maxJobs) {
+                    $this->logger->error("Exiting due to max jobs exceeded");
+                    exit();
+                }
+            }
+
+            // sleep for 0.1 second before proceeding.
+            usleep(100000);
+        }
+
     }
 
 }

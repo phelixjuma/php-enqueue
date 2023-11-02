@@ -4,7 +4,7 @@ namespace Phelixjuma\Enqueue;
 
 use Predis\Client;
 
-class RedisQueue
+class RedisQueue implements QueueInterface
 {
     private Client $client;
     private $queue_name;
@@ -14,16 +14,24 @@ class RedisQueue
     {
         $this->client = $client;
         $this->queue_name = $queueName;
-        $this->failed_queue_name = $queueName . ':failed';
+        $this->failed_queue_name = $queueName . '.failed';
     }
 
+    /**
+     * @param $name
+     * @return $this
+     */
     public function setName($name): RedisQueue
     {
         $this->queue_name = $name;
-        $this->failed_queue_name = $name . ':failed';
+        $this->failed_queue_name = $name . '.failed';
         return $this;
     }
 
+    /**
+     * @param Task $task
+     * @return void
+     */
     public function enqueue(Task $task)
     {
         $this->client->rpush($this->queue_name, [serialize($task),'']);
@@ -38,6 +46,7 @@ class RedisQueue
     public function fetch()
     {
         $serializedTask = $this->client->lpop($this->queue_name);
+
         return $serializedTask ? unserialize($serializedTask) : null;
     }
 
@@ -99,6 +108,5 @@ class RedisQueue
 
         }
     }
-
 
 }

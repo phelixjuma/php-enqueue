@@ -1,11 +1,12 @@
 <?php
 namespace Phelixjuma\Enqueue;
 
+use Pheanstalk\Pheanstalk;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class Task
 {
+
     private $job;
     private $args;
     protected $listenerDirectory;
@@ -14,13 +15,20 @@ class Task
     private $retries = 0;
     private $created_at;
 
+    private $delay;
+    private $timeToRelease;
+    private $priority;
+
     /**
      * @param $job
      * @param $args
+     * @param int $delay
+     * @param int $timeToRelease
+     * @param int $priority
      * @param $listenerDir
      * @param $listenerNamespace
      */
-    public function __construct($job, $args = null, $listenerDir = null, $listenerNamespace=null)
+    public function __construct($job, $args = null, int $delay=Pheanstalk::DEFAULT_DELAY, int $timeToRelease=Pheanstalk::DEFAULT_TTR, int $priority=Pheanstalk::DEFAULT_PRIORITY, $listenerDir = null, $listenerNamespace=null)
     {
         $this->job = $job;
         $this->args = $args;
@@ -28,6 +36,9 @@ class Task
         $this->listenerDirectory = $listenerDir;
         $this->listenerNamespace = $listenerNamespace;
         $this->created_at = new \DateTime();
+        $this->delay = $delay;
+        $this->timeToRelease = $timeToRelease;
+        $this->priority = $priority;
     }
 
     public function getJob()
@@ -65,13 +76,28 @@ class Task
         return $this->created_at;
     }
 
+    public function getDelay()
+    {
+        return $this->delay;
+    }
+
+    public function getTimeToRelease()
+    {
+        return $this->timeToRelease;
+    }
+
+    public function getPriority()
+    {
+        return $this->priority;
+    }
+
     /**
-     * @param RedisQueue $queue
+     * @param QueueInterface $queue
      * @param LoggerInterface $logger
-     * @param $maxRetries
+     * @param int $maxRetries
      * @return string
      */
-    public function execute(RedisQueue $queue, LoggerInterface $logger, $maxRetries=1): string
+    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1): string
     {
 
         $job = clone $this->getJob();
