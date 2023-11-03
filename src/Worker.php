@@ -137,7 +137,7 @@ class Worker
 
                         $task->setStatus('processing');
 
-                        $task->execute($this->queue, $this->logger, $this->maxRetries, $job);
+                        $task->execute($this->queue, $this->logger, $this->maxRetries);
 
                         // Increment jobs count
                         $doneJobs++;
