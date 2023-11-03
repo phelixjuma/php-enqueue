@@ -160,7 +160,6 @@ class Worker
             if (!empty($this->maxTime) && $this->maxTime > 0) {
 
                 if ((microtime(true) - $startTime) > $this->maxTime) {
-                    $this->logger->error("Exiting due to max time exceeded");
                     exit();
                 }
             }
@@ -169,7 +168,6 @@ class Worker
             if (!empty($this->maxJobs) && $this->maxJobs > 0) {
 
                 if ($doneJobs > $this->maxJobs) {
-                    $this->logger->error("Exiting due to max jobs exceeded");
                     exit();
                 }
             }
