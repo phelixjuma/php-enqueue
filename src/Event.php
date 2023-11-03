@@ -2,6 +2,7 @@
 
 namespace Phelixjuma\Enqueue;
 
+use Pheanstalk\Values\Job;
 use Psr\Log\LoggerInterface;
 
 class Event extends Task {
@@ -12,7 +13,7 @@ class Event extends Task {
      * @param int $maxRetries
      * @return string
      */
-    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1): string {
+    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1, Job $jobInstance = null): string {
 
         $event = $this->getJob();
 
@@ -38,7 +39,7 @@ class Event extends Task {
                 $listenerInstance->setUp($this);
 
                 // Handle the event
-                $listenerInstance->$method($this);
+                $listenerInstance->$method($this, $queue, $jobInstance);
 
                 // Run tear down for the listener
                 $listenerInstance->tearDown($this);
