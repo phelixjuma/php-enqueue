@@ -2,6 +2,7 @@
 
 namespace Phelixjuma\Enqueue;
 
+use Pheanstalk\Values\Job;
 use Psr\Log\LoggerInterface;
 
 class Worker
@@ -117,6 +118,9 @@ class Worker
             $this->queue->getClient()->watch($tube);
 
             // this hangs until a Job is produced.
+            /**
+             * @var Job $job
+             */
             $job = $this->queue->getClient()->reserve();
 
             try {
@@ -133,7 +137,7 @@ class Worker
 
                         $task->setStatus('processing');
 
-                        $task->execute($this->queue, $this->logger, $this->maxRetries);
+                        $task->execute($this->queue, $this->logger, $this->maxRetries, $job);
 
                         // Increment jobs count
                         $doneJobs++;

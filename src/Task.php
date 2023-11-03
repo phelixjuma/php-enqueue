@@ -2,6 +2,7 @@
 namespace Phelixjuma\Enqueue;
 
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\Values\Job;
 use Psr\Log\LoggerInterface;
 
 class Task
@@ -97,7 +98,7 @@ class Task
      * @param int $maxRetries
      * @return string
      */
-    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1): string
+    public function execute(QueueInterface $queue, LoggerInterface $logger, int $maxRetries=1, Job $jobInstance = null): string
     {
 
         $job = clone $this->getJob();
@@ -112,7 +113,7 @@ class Task
             $job->setUp($this);
 
             // Actual task execution
-            $job->perform($this);
+            $job->perform($this, $queue, $jobInstance);
 
             // Run tear down
             $job->tearDown($this);
