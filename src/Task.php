@@ -132,8 +132,7 @@ class Task
                 try {
                     $queue->enqueue($this);
                 } catch (\Exception | \Throwable  $ex) {
-                    $logger->error($ex->getMessage());
-                    $logger->error($ex->getTraceAsString());
+                    $logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
                 }
 
             } else {

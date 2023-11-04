@@ -54,9 +54,11 @@ class Event extends Task {
                 $this->setRetries($retries + 1);
                 $queue->enqueue($this);
             } else {
+
                 $queue->fail($this);
-                $logger->error('Failed with error', ['error' => $e->getMessage()]);
                 $this->setStatus('failed');
+
+                $logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
             }
         }
 
