@@ -43,26 +43,46 @@ class EventDiscovery {
         $eventNamespace = substr($eventClass, 0, strrpos($eventClass, '\\'));
 
         foreach ($this->directories as $index => $directory) {
+
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+
             foreach ($iterator as $file) {
+
                 if ($file->isFile() && $file->getExtension() === 'php') {
+
                     $relativePath = str_replace([$directory, '.php'], '', $file->getRealPath());
                     $className = $this->namespaces[$index] . str_replace('/', '\\', $relativePath);
+
                     if (class_exists($className, true)) {
+
+                        print "\nClass Name: $className\n";
+
                         $reflectionClass = new ReflectionClass($className);
+
                         if (is_subclass_of($className, ListenerInterface::class)) {
+
                             foreach ($reflectionClass->getMethods() as $method) {
+
+                                print "\nMethod: $method\n";
 
                                 $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
                                 if ($annotation) {
+
                                     $listenerEvent = strpos($annotation->for, '\\') === false
                                         ? $eventNamespace . '\\' . $annotation->for
                                         : $annotation->for;
 
+                                    print "\nMethod $method has ListenerEvent: $listenerEvent\n";
+
                                     if ($listenerEvent === $eventClass) {
                                         $listeners[] = [$className, $method->getName()];
+                                    } else {
+                                        print "\nMethod $method ListenerEvent $listenerEvent is not the same as the event class $eventClass hence skipped\n";
                                     }
+
+                                } else {
+                                    print "\nNo annotations for method: $method\n";
                                 }
                             }
                         }
