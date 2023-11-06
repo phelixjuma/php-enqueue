@@ -55,15 +55,11 @@ class EventDiscovery {
 
                     if (class_exists($className, true)) {
 
-                        print "\nClass Name: $className\n";
-
                         $reflectionClass = new ReflectionClass($className);
 
                         if (is_subclass_of($className, ListenerInterface::class)) {
 
                             foreach ($reflectionClass->getMethods() as $method) {
-
-                                print "\nMethod: $method\n";
 
                                 $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
@@ -73,16 +69,10 @@ class EventDiscovery {
                                         ? $eventNamespace . '\\' . $annotation->for
                                         : $annotation->for;
 
-                                    print "\nMethod $method has ListenerEvent: $listenerEvent\n";
-
                                     if ($listenerEvent === $eventClass) {
                                         $listeners[] = [$className, $method->getName()];
-                                    } else {
-                                        print "\nMethod $method ListenerEvent $listenerEvent is not the same as the event class $eventClass hence skipped\n";
                                     }
 
-                                } else {
-                                    print "\nNo annotations for method: $method\n";
                                 }
                             }
                         }

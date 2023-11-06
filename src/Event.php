@@ -26,9 +26,6 @@ class Event extends Task {
                ->registerDirectory($this->listenerDirectory, $this->listenerNamespace)
                ->getListenersForEvent(get_class($event));
 
-            print "\nList of listeners\n";
-            print_r($listeners);
-
             foreach ($listeners as [$listenerClass, $method]) {
 
                 $listenerInstance = new $listenerClass();
