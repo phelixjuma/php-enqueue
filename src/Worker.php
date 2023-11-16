@@ -149,15 +149,22 @@ class Worker
                 }
 
                 // eventually we're done, delete job.
-                $this->queue->getClient()->delete($job);
-
+                try {
+                    $job = $this->queue->getClient()->peek($job);
+                    $this->queue->getClient()->delete($job);
+                } catch (\Exception $e) {
+                }
 
             } catch (\Exception $e) {
                 // handle exception.
                 $this->logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
 
                 // and let some other worker retry.
-                $this->queue->getClient()->release($job);
+                try {
+                    $job = $this->queue->getClient()->peek($job);
+                    $this->queue->getClient()->release($job);
+                } catch (\Exception $e) {
+                }
             }
 
             // Check if max time is set
