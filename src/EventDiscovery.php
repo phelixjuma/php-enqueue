@@ -48,6 +48,7 @@ class EventDiscovery {
 
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
 
+            print "\nChecking all classes:\n";
             foreach ($iterator as $file) {
 
                 if ($file->isFile() && $file->getExtension() === 'php') {
@@ -55,12 +56,13 @@ class EventDiscovery {
                     $relativePath = str_replace([$directory, '.php'], '', $file->getRealPath());
                     $className = $this->namespaces[$index] . str_replace('/', '\\', $relativePath);
 
-                    print "\nClass Name: $className\n";
+                    print "\nChecking class: $className\n";
 
                     if (class_exists($className, true)) {
 
                         $reflectionClass = new ReflectionClass($className);
 
+                        print "\nChecking class methods:\n";
                         if (is_subclass_of($className, ListenerInterface::class)) {
 
                             foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
@@ -72,7 +74,7 @@ class EventDiscovery {
 
                                     if (!in_array($methodName, ['__construct', 'setUp', 'tearDown'])) {
 
-                                        print "\nClass Name: $className. Class method: $methodName\n";
+                                        print "\nMethod: $methodName\n";
 
                                         $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
@@ -82,14 +84,17 @@ class EventDiscovery {
                                                 ? $eventNamespace . '\\' . $annotation->for
                                                 : $annotation->for;
 
-                                            print "\nClass Name: $className. Class method: $methodName. Listener Event: $listenerEvent\n";
+                                            print "\nMethod $methodName is listening to Event $listenerEvent\n";
 
                                             if ($listenerEvent === $eventClass) {
+                                                print "\nMethod $methodName is listening to $eventClass. We include it\n";
                                                 $listeners[] = [$className, $methodName];
+                                            } else {
+                                                print "\nMethod $methodName is not listening to $eventClass. We skip it\n";
                                             }
 
                                         } else {
-                                            print "\nClass Name: $className. Class method: $methodName has no annotation\n";
+                                            print "\nMethod $methodName has no annotation\n";
                                         }
                                     }
                                 }
@@ -100,6 +105,8 @@ class EventDiscovery {
                 }
             }
         }
+        print_r($listeners);
+
         return $listeners;
     }
 }
