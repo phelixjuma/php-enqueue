@@ -3,7 +3,6 @@
 namespace Phelixjuma\Enqueue;
 
 use Doctrine\Common\Annotations\AnnotationReader;
-use Phelixjuma\Enqueue\Listener;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -66,24 +65,29 @@ class EventDiscovery {
 
                             foreach ($reflectionClass->getMethods() as $method) {
 
-                                print "\nClass Name: $className. Class method: $method\n";
+                                $methodName = $method->getName();
 
-                                $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
+                                if (!in_array($methodName, ['__construct', 'setUp', 'tearDown'])) {
 
-                                if ($annotation) {
+                                    print "\nClass Name: $className. Class method: $methodName\n";
 
-                                    $listenerEvent = strpos($annotation->for, '\\') === false
-                                        ? $eventNamespace . '\\' . $annotation->for
-                                        : $annotation->for;
+                                    $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
-                                    print "\nClass Name: $className. Class method: $method. Listener Event: $listenerEvent\n";
+                                    if ($annotation) {
 
-                                    if ($listenerEvent === $eventClass) {
-                                        $listeners[] = [$className, $method->getName()];
+                                        $listenerEvent = strpos($annotation->for, '\\') === false
+                                            ? $eventNamespace . '\\' . $annotation->for
+                                            : $annotation->for;
+
+                                        print "\nClass Name: $className. Class method: $methodName. Listener Event: $listenerEvent\n";
+
+                                        if ($listenerEvent === $eventClass) {
+                                            $listeners[] = [$className, $methodName];
+                                        }
+
+                                    } else {
+                                        print "\nClass Name: $className. Class method: $method has no annotation\n";
                                     }
-
-                                } else {
-                                    print "\nClass Name: $className. Class method: $method has no annotation\n";
                                 }
                             }
                         }
