@@ -63,32 +63,37 @@ class EventDiscovery {
 
                         if (is_subclass_of($className, ListenerInterface::class)) {
 
-                            foreach ($reflectionClass->getMethods() as $method) {
+                            foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
 
-                                $methodName = $method->getName();
+                                // This checks if the declaring class of the method is the same as the reflection class
+                                if ($method->getDeclaringClass()->getName() === $reflectionClass->getName()) {
 
-                                if (!in_array($methodName, ['__construct', 'setUp', 'tearDown'])) {
+                                    $methodName = $method->getName();
 
-                                    print "\nClass Name: $className. Class method: $methodName\n";
+                                    if (!in_array($methodName, ['__construct', 'setUp', 'tearDown'])) {
 
-                                    $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
+                                        print "\nClass Name: $className. Class method: $methodName\n";
 
-                                    if ($annotation) {
+                                        $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
-                                        $listenerEvent = strpos($annotation->for, '\\') === false
-                                            ? $eventNamespace . '\\' . $annotation->for
-                                            : $annotation->for;
+                                        if ($annotation) {
 
-                                        print "\nClass Name: $className. Class method: $methodName. Listener Event: $listenerEvent\n";
+                                            $listenerEvent = strpos($annotation->for, '\\') === false
+                                                ? $eventNamespace . '\\' . $annotation->for
+                                                : $annotation->for;
 
-                                        if ($listenerEvent === $eventClass) {
-                                            $listeners[] = [$className, $methodName];
+                                            print "\nClass Name: $className. Class method: $methodName. Listener Event: $listenerEvent\n";
+
+                                            if ($listenerEvent === $eventClass) {
+                                                $listeners[] = [$className, $methodName];
+                                            }
+
+                                        } else {
+                                            print "\nClass Name: $className. Class method: $methodName has no annotation\n";
                                         }
-
-                                    } else {
-                                        print "\nClass Name: $className. Class method: $method has no annotation\n";
                                     }
                                 }
+
                             }
                         }
                     }
