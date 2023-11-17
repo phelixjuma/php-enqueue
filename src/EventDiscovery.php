@@ -42,6 +42,9 @@ class EventDiscovery {
         // Extract namespace from the event class
         $eventNamespace = substr($eventClass, 0, strrpos($eventClass, '\\'));
 
+        print "\nEvent Class: $eventClass\n";
+        print "\nEvent Namespace: $eventNamespace\n";
+
         foreach ($this->directories as $index => $directory) {
 
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
@@ -53,6 +56,8 @@ class EventDiscovery {
                     $relativePath = str_replace([$directory, '.php'], '', $file->getRealPath());
                     $className = $this->namespaces[$index] . str_replace('/', '\\', $relativePath);
 
+                    print "\nClass Name: $className\n";
+
                     if (class_exists($className, true)) {
 
                         $reflectionClass = new ReflectionClass($className);
@@ -60,6 +65,8 @@ class EventDiscovery {
                         if (is_subclass_of($className, ListenerInterface::class)) {
 
                             foreach ($reflectionClass->getMethods() as $method) {
+
+                                print "\nClass Name: $className. Class method: $method\n";
 
                                 $annotation = $this->annotationReader->getMethodAnnotation($method, Listener::class);
 
@@ -69,10 +76,14 @@ class EventDiscovery {
                                         ? $eventNamespace . '\\' . $annotation->for
                                         : $annotation->for;
 
+                                    print "\nClass Name: $className. Class method: $method. Listener Event: $listenerEvent\n";
+
                                     if ($listenerEvent === $eventClass) {
                                         $listeners[] = [$className, $method->getName()];
                                     }
 
+                                } else {
+                                    print "\nClass Name: $className. Class method: $method has no annotation\n";
                                 }
                             }
                         }
