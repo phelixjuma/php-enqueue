@@ -95,8 +95,8 @@ class Worker
                 }
             }
 
-            // sleep for 0.1 second before proceeding.
-            usleep(100000);
+            // sleep for 3 second before proceeding.
+            usleep(3000000);
         }
 
     }
@@ -183,8 +183,8 @@ class Worker
                 }
             }
 
-            // sleep for 0.1 second before proceeding.
-            usleep(100000);
+            // sleep for 3 second before proceeding.
+            usleep(3000000);
         }
 
     }
