@@ -42,6 +42,10 @@ class BeanstalkdQueue implements QueueInterface
         return $this;
     }
 
+    public function getName() {
+        return $this->queue_name;
+    }
+
     /**
      * @param Task $task
      * @return void

@@ -49,6 +49,8 @@ class Worker
     private function startRedisWorker(): void
     {
 
+        $this->logger->error("Started worker on ".$this->queue->getName());
+
         $startTime = microtime(true);
         $doneJobs = 0;
 

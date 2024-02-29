@@ -10,6 +10,7 @@ interface QueueInterface
      * @return mixed
      */
     public function setName($name);
+    public function getName();
     /**
      * @param Task $task
      * @return void
