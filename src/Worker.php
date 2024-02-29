@@ -37,17 +37,9 @@ class Worker
     public function start()
     {
 
-        $this->logger->error("Started worker on ".$this->queue->getName());
-
         if ($this->queue instanceof BeanstalkdQueue) {
-
-            $this->logger->error("Beanstalk queue");
-
             $this->startBeanstalkdWorker();
         } else {
-
-            $this->logger->error("Redis queue");
-
             $this->startRedisWorker();
         }
     }
