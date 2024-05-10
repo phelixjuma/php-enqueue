@@ -6,7 +6,6 @@ use Exception;
 use Phelixjuma\Enqueue\Jobs\EmailJob;
 use Phelixjuma\Enqueue\RepeatTask;
 use Phelixjuma\Enqueue\Schedule;
-use Phelixjuma\Enqueue\Task;
 use PHPUnit\Framework\TestCase;
 
 class ScheduledJobTest extends TestCase
@@ -24,6 +23,6 @@ class ScheduledJobTest extends TestCase
 
         $task = new RepeatTask(new EmailJob(), ['email' => 'test@example.com'], $schedule, '23456');
 
-        print "\nscheduled task of id {$task->getId()}, key {$task->getKey()} . Status is {$task->getStatus()} and next run is {$task->schedule->nextRun}\n";
+        print "\nscheduled task of id {$task->getId()}, key {$task->getKey()} . Status is {$task->getStatus()} and next run is {$task->getSchedule()->nextRun}\n";
     }
 }

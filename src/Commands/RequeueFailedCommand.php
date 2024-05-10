@@ -3,7 +3,6 @@ namespace Phelixjuma\Enqueue\Commands;
 
 use Phelixjuma\Enqueue\RedisQueue;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,7 +28,7 @@ class RequeueFailedCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The name of the queue',
-                'default'
+                null
             );
     }
 

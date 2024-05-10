@@ -4,7 +4,6 @@ namespace Phelixjuma\Enqueue\Commands;
 use Phelixjuma\Enqueue\RedisQueue;
 use Phelixjuma\Enqueue\Task;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -30,7 +29,7 @@ class AddCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The name of the queue',
-                'default'
+                null
             )
             // configure the class option
             ->addOption(
@@ -38,14 +37,14 @@ class AddCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The class of the job to add',
-                'default'
+                null
             )
             ->addOption(
                 'parameters',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The parameters of the job to add',
-                'default'
+                null
             );
     }
 
@@ -57,7 +56,7 @@ class AddCommand extends Command
 
         $task = new Task($class, $parameters);
 
-        $this->queue->setName($queueName)->add($task);
+        $this->queue->setName($queueName)->enqueue($task);
 
         $output->writeln('<info>Task added to the queue</info>');
         return 0;

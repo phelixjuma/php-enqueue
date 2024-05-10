@@ -7,7 +7,6 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Predis\Client;
 
 class ListCommand extends Command
 {
@@ -38,7 +37,7 @@ class ListCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The name of the queue',
-                'default'
+                null
             );
     }
 

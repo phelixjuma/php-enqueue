@@ -2,8 +2,6 @@
 
 namespace Phelixjuma\Enqueue\Tests;
 
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
 use Phelixjuma\Enqueue\Event;
 use Phelixjuma\Enqueue\Events\Events\EmailSentEvent;
 use Phelixjuma\Enqueue\Jobs\EmailJob;

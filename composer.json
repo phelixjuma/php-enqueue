@@ -7,14 +7,12 @@
     "ext-json": "*",
     "vlucas/phpdotenv": "^5.3",
     "predis/predis": "^1.1",
-    "symfony/console": "^5.3",
-    "amphp/parallel": "^2.2",
-    "symfony/event-dispatcher": "^5.3",
     "psr/log":  "^3.0",
     "monolog/monolog": "^3.4",
     "doctrine/annotations": "^2.0",
     "pda/pheanstalk": "^5.0",
-    "dragonmantank/cron-expression": "^3.3"
+    "dragonmantank/cron-expression": "^3.3",
+    "symfony/console": "^6.4"
   },
   "scripts": {
     "test": "vendor/bin/phpunit"
