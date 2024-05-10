@@ -1,16 +1,24 @@
 <?php
 namespace Phelixjuma\Enqueue;
 
+use Exception;
 use Pheanstalk\Pheanstalk;
 use Psr\Log\LoggerInterface;
 
 class Task
 {
 
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_FAILED = 'failed';
+
     private $job;
     private $args;
     protected $listenerDirectory;
     protected $listenerNamespace;
+    private $id;
     private $status;
     private $retries = 0;
     private $created_at;
@@ -18,6 +26,8 @@ class Task
     private $delay;
     private $timeToRelease;
     private $priority;
+
+    protected Schedule $schedule;
 
     /**
      * @param $job
@@ -27,18 +37,22 @@ class Task
      * @param int $priority
      * @param $listenerDir
      * @param $listenerNamespace
+     * @param $id
+     * @throws Exception
      */
-    public function __construct($job, $args = null, int $delay=Pheanstalk::DEFAULT_DELAY, int $timeToRelease=Pheanstalk::DEFAULT_TTR, int $priority=Pheanstalk::DEFAULT_PRIORITY, $listenerDir = null, $listenerNamespace=null)
+    public function __construct($job, $args = null, $delay=Pheanstalk::DEFAULT_DELAY, $timeToRelease=Pheanstalk::DEFAULT_TTR, $priority=Pheanstalk::DEFAULT_PRIORITY, $listenerDir = null, $listenerNamespace=null, $id = null)
     {
         $this->job = $job;
         $this->args = $args;
         $this->status = 'pending';
         $this->listenerDirectory = $listenerDir;
         $this->listenerNamespace = $listenerNamespace;
+        $this->id = !empty($id) ? $id : self::generateRandomId();
         $this->created_at = new \DateTime();
         $this->delay = $delay;
         $this->timeToRelease = $timeToRelease;
         $this->priority = $priority;
+
     }
 
     public function getJob()
@@ -49,6 +63,15 @@ class Task
     public function getArgs()
     {
         return $this->args;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getKey() {
+        return "TASK_" . $this->getId();
     }
 
     public function getStatus()
@@ -92,6 +115,29 @@ class Task
     }
 
     /**
+     * @return Schedule|null
+     */
+    public function getSchedule(): ?Schedule
+    {
+        return !empty($this->schedule) ? $this->schedule : null;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    private static function generateRandomId() {
+        $token = '';
+        $length = 10;
+        $alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        for ($i = 0; $i < $length; $i++) {
+            $randomKey = random_int(0, strlen($alphabet)-1);
+            $token .= $alphabet[$randomKey];
+        }
+        return $token;
+    }
+
+    /**
      * @param QueueInterface $queue
      * @param LoggerInterface $logger
      * @param int $maxRetries
@@ -118,9 +164,11 @@ class Task
             $job->tearDown($this);
 
             // Update status to completed
-            $this->setStatus('completed');
+            $this->setStatus(self::STATUS_COMPLETED);
 
-        } catch (\Exception | \Throwable  $e) {
+        } catch (Exception | \Throwable  $e) {
+
+            print "\nError in task execution: {$e->getMessage()}\n";
 
             $retries = $this->getRetries();
 
@@ -131,7 +179,7 @@ class Task
                 // Requeue the task
                 try {
                     $queue->enqueue($this);
-                } catch (\Exception | \Throwable  $ex) {
+                } catch (Exception | \Throwable  $ex) {
                     $logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
                 }
 
@@ -142,7 +190,7 @@ class Task
 
                 $logger->error('Failed with error', ['error' => $e->getMessage()]);
 
-                $this->setStatus('failed');
+                $this->setStatus(self::STATUS_FAILED);
             }
         }
 

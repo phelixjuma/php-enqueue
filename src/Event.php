@@ -45,9 +45,10 @@ class Event extends Task {
             }
 
             // Update status to completed
-            $this->setStatus('completed');
+            $this->setStatus(self::STATUS_COMPLETED);
 
         } catch (\Exception | \Throwable $e) {
+
             $retries = $this->getRetries();
 
             if ($retries < $maxRetries) {
@@ -56,7 +57,7 @@ class Event extends Task {
             } else {
 
                 $queue->fail($this);
-                $this->setStatus('failed');
+                $this->setStatus(self::STATUS_FAILED);
 
                 $logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
             }

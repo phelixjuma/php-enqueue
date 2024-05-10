@@ -29,6 +29,9 @@ class Worker
         $this->maxRetries = $maxRetries;
         $this->maxTime = $maxTime;
         $this->maxJobs = $maxJobs;
+
+        // We set the timezone
+        date_default_timezone_set("UTC");
     }
 
     /**
@@ -57,13 +60,12 @@ class Worker
 
             try {
 
-                $task = $this->queue->fetch();
-
-                if (!empty($task)) {
+                // Handle immediate tasks
+                while ($task = $this->queue->fetch()) {
 
                     if ($task instanceof Task || $task instanceof Event) {
 
-                        $task->setStatus('processing');
+                        $task->setStatus(Task::STATUS_PROCESSING);
 
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
 
@@ -75,6 +77,25 @@ class Worker
                         $this->queue->fail($task);
                     }
                 }
+
+                // Handle scheduled tasks
+                while ($task = $this->queue->fetchScheduled()) {
+
+                    if ($task instanceof RepeatTask) {
+
+                        $task->setStatus(Task::STATUS_PROCESSING);
+
+                        $task->execute($this->queue, $this->logger, $this->maxRetries);
+
+                        // Increment jobs count
+                        $doneJobs++;
+
+                    } else {
+                        // We fail invalid tasks
+                        $this->queue->fail($task);
+                    }
+                }
+
 
             } catch (\Exception | \Throwable  $e) {
                 $this->logger->error($e->getMessage()." on line ".$e->getLine(). " in ".$e->getFile()." Trace: ".$e->getTraceAsString());
@@ -136,7 +157,7 @@ class Worker
 
                     if ($task instanceof Task || $task instanceof Event) {
 
-                        $task->setStatus('processing');
+                        $task->setStatus(Task::STATUS_PROCESSING);
 
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
 

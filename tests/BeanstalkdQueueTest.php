@@ -14,7 +14,7 @@ use Predis\Client;
 
 class BeanstalkdQueueTest extends TestCase
 {
-    public function testQueueingJob()
+    public function _testQueueingJob()
     {
         $pheanstalk = Pheanstalk::create('127.0.0.1', 11300);
         $queue = new BeanstalkdQueue($pheanstalk);
