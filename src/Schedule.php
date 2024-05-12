@@ -2,7 +2,7 @@
 
 namespace Phelixjuma\Enqueue;
 
-use Cron\CronExpression;
+use Phelixjuma\Enqueue\QuartzCronExpression\CronExpression;
 use Exception;
 
 class Schedule  {
@@ -82,16 +82,6 @@ class Schedule  {
         });
         sort($dates);
         return $dates ? array_shift($dates) : null;
-    }
-
-    public function shouldRun(): bool {
-
-        $today = new \DateTime();
-        $todayStr = $today->format('Y-m-d');
-
-        // Check if today matches any specific date or cron
-        return in_array($todayStr, $this->specific_dates) || (new CronExpression($this->expression))->isDue();
-
     }
 
     /**

@@ -11,8 +11,8 @@
     "monolog/monolog": "^3.4",
     "doctrine/annotations": "^2.0",
     "pda/pheanstalk": "^5.0",
-    "dragonmantank/cron-expression": "^3.3",
-    "symfony/console": "^6.4"
+    "symfony/console": "^6.4",
+    "webmozart/assert": "^1.11"
   },
   "scripts": {
     "test": "vendor/bin/phpunit"

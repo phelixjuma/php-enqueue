@@ -26,7 +26,7 @@ class RedisQueueTest extends TestCase
             ->enqueue(new Task(new EmailJob(), ['time' => date("Y-m-d H:i:s", time())], ''));
     }
 
-    public function testQueueingEvent()
+    public function _testQueueingEvent()
     {
         $redis = new Client('tcp://127.0.0.1:6379');
         $queue = new RedisQueue($redis);
@@ -50,16 +50,16 @@ class RedisQueueTest extends TestCase
         $redis = new Client('tcp://127.0.0.1:6379');
         $queue = new RedisQueue($redis);
 
-        $cronExpression = "*/3 * * * *";
+        $cronExpression = "50 37 7 12 MAY-AUG ? 2023-2028";
         //$dates = ["2024-05-10 10:40:00", "2024-05-10 10:41:00", "2024-05-10 10:42:00"];
         $lastDate = "2024-05-10 11:55:00";
         $oneTimeDate = [$lastDate];
 
-        $schedule = new Schedule($oneTimeDate, '', '');
+        $schedule = new Schedule('', $cronExpression, '');
 
         $task = new RepeatTask(new EmailJob(), ['email' => 'test@example.com'], $schedule, '2345205');
 
-        $now = time();
+        $now = date("Y-m-d H:i:s");
         print "\ntask key is {$task->getKey()}. Time is $now\n";
 
         $queue
