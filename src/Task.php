@@ -19,6 +19,7 @@ class Task
     protected $listenerDirectory;
     protected $listenerNamespace;
     private $id;
+    private $executionId;
     private $status;
     private $retries = 0;
     private $created_at;
@@ -48,6 +49,7 @@ class Task
         $this->listenerDirectory = $listenerDir;
         $this->listenerNamespace = $listenerNamespace;
         $this->id = !empty($id) ? $id : self::generateRandomId();
+        $this->executionId = self::generateUUIDv4();
         $this->created_at = new \DateTime();
         $this->delay = $delay;
         $this->timeToRelease = $timeToRelease;
@@ -68,6 +70,11 @@ class Task
     public function getId()
     {
         return $this->id;
+    }
+
+    public function getExecutionId()
+    {
+        return $this->executionId;
     }
 
     public function getKey() {
@@ -135,6 +142,25 @@ class Task
             $token .= $alphabet[$randomKey];
         }
         return $token;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    private static function generateUUIDv4() {
+
+        // Generate 16 bytes (128 bits) of random data or use the data returned by mt_rand().
+        $data = random_bytes(16);
+
+        // Set the version to 0100 (binary for 4)
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // version 4
+
+        // Set the bits 6-7 to 10
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // variant 1
+
+        // Output the 36 character UUID.
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
     /**
