@@ -48,9 +48,9 @@ class BeanstalkdQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return void
+     * @return true
      */
-    public function enqueue(Task $task)
+    public function enqueue(Task $task): bool
     {
         $this->client->useTube($this->queue_name);
 
@@ -60,9 +60,15 @@ class BeanstalkdQueue implements QueueInterface
             $task->getDelay(), // delay
             $task->getTimeToRelease() // time to release
         );
+
+        return true;
     }
 
-    public function fail(Task $task)
+    /**
+     * @param Task $task
+     * @return false
+     */
+    public function fail(Task $task): bool
     {
         // We add the task to the failed queue
         $this->client->useTube($this->failed_queue_name);
@@ -73,5 +79,7 @@ class BeanstalkdQueue implements QueueInterface
             $task->getDelay(), // delay
             $task->getTimeToRelease() // time to release
         );
+
+        return false;
     }
 }

@@ -15,7 +15,7 @@ interface QueueInterface
      * @param Task $task
      * @return void
      */
-    public function enqueue(Task $task);
-    public function fail(Task $task);
+    public function enqueue(Task $task): bool;
+    public function fail(Task $task): bool;
 
 }

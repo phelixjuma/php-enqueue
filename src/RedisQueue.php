@@ -34,9 +34,9 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return bool|int
+     * @return bool
      */
-    public function enqueue(Task $task)
+    public function enqueue(Task $task): bool
     {
         if ($task instanceof RepeatTask) {
             return $this->enqueueSchedule($task);
@@ -47,11 +47,16 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return false|int
+     * @return bool
      */
-    private function enqueueTask(Task $task) {
+    private function enqueueTask(Task $task): bool
+    {
         try {
-            return $this->client->rpush($this->queue_name, [serialize($task),'']);
+
+            $id = $this->client->rpush($this->queue_name, [serialize($task),'']);
+
+            return !empty($id);
+
         } catch (\Exception $e) {}
         return false;
     }
@@ -60,7 +65,8 @@ class RedisQueue implements QueueInterface
      * @param RepeatTask $task
      * @return bool
      */
-    public function enqueueSchedule(RepeatTask $task) {
+    public function enqueueSchedule(RepeatTask $task): bool
+    {
 
         // Remove the existing task from Redis if it already exists
         $this->deleteTask($task);
@@ -84,9 +90,10 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return bool|int
+     * @return bool
      */
-    public function updateTask(Task $task) {
+    public function updateTask(Task $task): bool
+    {
         // Simply call enqueueSchedule again; it will update the task if it exists
         return $this->enqueue($task);
     }
@@ -95,7 +102,8 @@ class RedisQueue implements QueueInterface
      * @param Task $task
      * @return bool
      */
-    public function deleteTask(Task $task) {
+    public function deleteTask(Task $task): bool
+    {
 
         $key = $task->getKey();
 
@@ -115,9 +123,9 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return false|int
+     * @return bool
      */
-    public function fail(Task $task)
+    public function fail(Task $task): bool
     {
         // We add the task to the failed queue
         try {
