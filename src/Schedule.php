@@ -10,7 +10,6 @@ class Schedule  {
     private $specific_dates;
     private $expression;
     private $last_date;
-    private $timezone;
 
     public $nextRun;
 
@@ -25,9 +24,6 @@ class Schedule  {
         $this->specific_dates = $specific_dates;
         $this->expression = $expression;
         $this->last_date = $last_date ? new \DateTime($last_date) : null;
-        $this->timezone = "UTC";
-
-        date_default_timezone_set($this->timezone);
 
         $this->calculateNextRun();
     }
