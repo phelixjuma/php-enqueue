@@ -143,6 +143,11 @@ abstract class AbstractField implements FieldInterface
         if ('*' === $range) {
             $range = $this->rangeStart . '-' . $this->rangeEnd;
         }
+        // expand numeric range to full range
+        if (is_numeric($range)) {
+            $lastValue = $range + floor(($this->rangeEnd - $range)/$step) * $step;
+            $range = $range . '-' . $lastValue;
+        }
 
         // Generate the requested small range
         $rangeChunks = explode('-', $range, 2);
@@ -210,12 +215,14 @@ abstract class AbstractField implements FieldInterface
                 $to = $this->convertLiterals($to);
                 $stepSize = 1;
             } else {
+
                 $range = array_map('trim', explode('/', $expression, 2));
                 $stepSize = $range[1] ?? 0;
                 $range = $range[0];
                 $range = explode('-', $range, 2);
                 $offset = $range[0];
                 $to = $range[1] ?? $max;
+
             }
             $offset = '*' === $offset ? $this->rangeStart : $offset;
             if ($stepSize >= $this->rangeEnd) {
@@ -283,9 +290,9 @@ abstract class AbstractField implements FieldInterface
             [$range, $step] = explode('/', $value);
 
             // Don't allow numeric ranges
-            if (is_numeric($range)) {
-                return false;
-            }
+//            if (is_numeric($range)) {
+//                return false;
+//            }
 
             return $this->validate($range) && filter_var($step, FILTER_VALIDATE_INT);
         }

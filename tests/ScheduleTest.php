@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class ScheduleTest extends TestCase
 {
-    public function _testSchedule()
+    public function testSchedule()
     {
 
 
@@ -17,7 +17,7 @@ class ScheduleTest extends TestCase
         $now = date("Y-m-d H:i:s", time());
         print "\ncurrent time: $now\n";
 
-        $expression = '10,15,19 24 7 12 MAY-AUG ? 2023-2028'; // This will run every 10 seconds
+        $expression = '9/8 0 0 ? * * *'; // This will run every 10 seconds
         $cron = new CronExpression($expression);
 
         // Get the next run date
