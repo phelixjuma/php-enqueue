@@ -34,24 +34,31 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param Task $task
-     * @return void
+     * @return bool|int
      */
     public function enqueue(Task $task)
     {
         if ($task instanceof RepeatTask) {
-            $this->enqueueSchedule($task);
+            return $this->enqueueSchedule($task);
         } else {
-            $this->enqueueTask($task);
+            return $this->enqueueTask($task);
         }
     }
 
+    /**
+     * @param Task $task
+     * @return false|int
+     */
     private function enqueueTask(Task $task) {
-        $this->client->rpush($this->queue_name, [serialize($task),'']);
+        try {
+            return $this->client->rpush($this->queue_name, [serialize($task),'']);
+        } catch (\Exception $e) {}
+        return false;
     }
 
     /**
      * @param RepeatTask $task
-     * @return void
+     * @return bool
      */
     public function enqueueSchedule(RepeatTask $task) {
 
@@ -63,43 +70,65 @@ class RedisQueue implements QueueInterface
             $timestamp = strtotime($task->getSchedule()->nextRun);
             $key = $task->getKey();
 
-            // Add the new or updated task
-            $this->client->zadd($this->queue_name, [$key => $timestamp]);
-            $this->client->set($key, serialize($task));
-        }
-    }
+            try {
+                // Add the new or updated task
+                $this->client->zadd($this->queue_name, [$key => $timestamp]);
+                $this->client->set($key, serialize($task));
 
-    /**
-     * @param RepeatTask $task
-     * @return void
-     */
-    public function updateTask(Task $task) {
-        // Simply call enqueueSchedule again; it will update the task if it exists
-        $this->enqueue($task);
+                return true;
+
+            } catch (\Exception $e) {}
+        }
+        return false;
     }
 
     /**
      * @param Task $task
-     * @return void
+     * @return bool|int
+     */
+    public function updateTask(Task $task) {
+        // Simply call enqueueSchedule again; it will update the task if it exists
+        return $this->enqueue($task);
+    }
+
+    /**
+     * @param Task $task
+     * @return bool
      */
     public function deleteTask(Task $task) {
 
         $key = $task->getKey();
 
-        if ($this->client->exists($key)) {
+        try {
+            if ($this->client->exists($key)) {
 
-            $this->client->zrem($this->queue_name, $key);
+                $this->client->zrem($this->queue_name, $key);
 
-            $this->client->del($key);
+                $this->client->del($key);
+
+                return true;
+            }
+        } catch (\Exception $e) {
         }
+        return false;
     }
 
+    /**
+     * @param Task $task
+     * @return false|int
+     */
     public function fail(Task $task)
     {
         // We add the task to the failed queue
-        $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
+        try {
+            return $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
+        } catch (\Exception $e) {}
+        return false;
     }
 
+    /**
+     * @return mixed|null
+     */
     public function fetch()
     {
         try {
@@ -140,6 +169,9 @@ class RedisQueue implements QueueInterface
         return null;
     }
 
+    /**
+     * @return array
+     */
     public function list(): array
     {
         return array_map(function($data) {
@@ -147,6 +179,9 @@ class RedisQueue implements QueueInterface
         }, $this->client->lrange($this->queue_name, 0, -1));
     }
 
+    /**
+     * @return array
+     */
     public function getFailedJobs(): array
     {
         return array_map(function($data) {
@@ -154,11 +189,19 @@ class RedisQueue implements QueueInterface
         }, $this->client->lrange($this->failed_queue_name, 0, -1));
     }
 
+    /**
+     * @param Task $task
+     * @return void
+     */
     public function removeFromQueue(Task $task)
     {
         $this->client->lrem($this->queue_name, 0, serialize($task));
     }
 
+    /**
+     * @param Task $task
+     * @return void
+     */
     public function removeFromFailedQueue(Task $task)
     {
         $this->client->lrem($this->failed_queue_name, 0, serialize($task));
