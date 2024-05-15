@@ -77,6 +77,14 @@ class Task
         return $this->executionId;
     }
 
+    /**
+     * @return void
+     * @throws Exception
+     */
+    public function setExecutionId() {
+        $this->executionId = self::generateUUIDv4();
+    }
+
     public function getKey() {
         return "TASK_" . $this->getId();
     }

@@ -37,9 +37,15 @@ class RepeatTask extends Task {
 
         if ($result === self::STATUS_COMPLETED) {
 
-            $this->schedule->calculateNextRun();  // Update next run time after successful execution
+            // Update next run time after successful execution
+            $this->schedule->calculateNextRun();
 
-            $queue->enqueue($this);  // Reschedule the task
+            // We update the execution id
+            $newTask = clone $this;
+            $newTask->setExecutionId();
+
+            // Reschedule the task
+            $queue->enqueue($newTask);
         }
         return $result;
     }

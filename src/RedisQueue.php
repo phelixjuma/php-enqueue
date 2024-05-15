@@ -246,7 +246,6 @@ class RedisQueue implements QueueInterface
 
         foreach ($failedJobs as $task) {
             $this->removeFromFailedQueue($task);
-
         }
     }
 
