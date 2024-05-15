@@ -22,7 +22,7 @@ class Worker
      * @param $maxJobs
      * @param LoggerInterface $logger
      */
-    public function __construct(QueueInterface $queue, $maxRetries, $maxTime, $maxJobs, LoggerInterface $logger)
+    public function __construct(QueueInterface $queue, $maxRetries, $maxTime, $maxJobs, LoggerInterface $logger, $timezone='UTC')
     {
         $this->queue = $queue;
         $this->logger = $logger;
@@ -31,7 +31,7 @@ class Worker
         $this->maxJobs = $maxJobs;
 
         // We set the timezone
-        date_default_timezone_set("UTC");
+        date_default_timezone_set($timezone);
     }
 
     /**

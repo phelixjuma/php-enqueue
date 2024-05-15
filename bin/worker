@@ -17,7 +17,7 @@ use Dotenv\Dotenv;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
-$options = getopt('', ['engine:', 'queue:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:']);
+$options = getopt('', ['engine:', 'queue:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:', 'timezone:']);
 
 $queueEngine = $options['engine'] ?? "redis";
 $queueName = $options['queue'] ?? null;
@@ -26,6 +26,7 @@ $logLevel = $options['log_level'] ?? null;
 $maxRetries = $options['max_retries'] ?? null;
 $maxTime = $options['max_time'] ?? null;
 $maxJobs = $options['max_jobs'] ?? null;
+$timezone = $options['timezone'] ?? 'UTC';
 
 $dotenv = Dotenv::createImmutable(getcwd());
 $dotenv->load();
@@ -52,5 +53,5 @@ if ($queueEngine == 'beanstalkd') {
 $log = new Logger($queueName);
 $log->pushHandler(new StreamHandler($logPath.'/'.$queueName.'.log', Logger::DEBUG));
 
-$worker = new Worker($queue, $maxRetries, $maxTime, $maxJobs, $log);
+$worker = new Worker($queue, $maxRetries, $maxTime, $maxJobs, $log, $timezone);
 $worker->start();
