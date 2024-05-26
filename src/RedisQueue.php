@@ -160,7 +160,7 @@ class RedisQueue implements QueueInterface
 
         // Fetch the next task that is due
         $timezone = date_default_timezone_get();
-        $now = (new \DateTime('now', $timezone))->getTimestamp();
+        $now = (new \DateTime('now', new \DateTimeZone($timezone)))->getTimestamp();
 
         try {
 
