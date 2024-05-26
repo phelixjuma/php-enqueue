@@ -10,7 +10,7 @@ class Schedule  {
     private $specific_dates;
     private $expression;
     private $last_date;
-    private $timezone;
+    public $timezone;
 
     public $nextRun;
 

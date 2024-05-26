@@ -2,6 +2,7 @@
 
 namespace Phelixjuma\Enqueue;
 
+use Exception;
 use Predis\Client;
 
 class RedisQueue implements QueueInterface
@@ -57,13 +58,14 @@ class RedisQueue implements QueueInterface
 
             return !empty($id);
 
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {}
         return false;
     }
 
     /**
      * @param RepeatTask $task
      * @return bool
+     * @throws Exception
      */
     public function enqueueSchedule(RepeatTask $task): bool
     {
@@ -73,7 +75,8 @@ class RedisQueue implements QueueInterface
 
         if (!$task->getSchedule()->isPastDue()) {
 
-            $timestamp = strtotime($task->getSchedule()->nextRun);
+            $timestamp = (new \DateTime($task->getSchedule()->nextRun, $task->getSchedule()->timezone))->getTimestamp();
+
             $key = $task->getKey();
 
             try {
@@ -83,7 +86,7 @@ class RedisQueue implements QueueInterface
 
                 return true;
 
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {}
         }
         return false;
     }
@@ -116,7 +119,7 @@ class RedisQueue implements QueueInterface
 
                 return true;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
         return false;
     }
@@ -130,7 +133,7 @@ class RedisQueue implements QueueInterface
         // We add the task to the failed queue
         try {
             return $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {}
         return false;
     }
 
@@ -145,17 +148,19 @@ class RedisQueue implements QueueInterface
 
             return $serializedTask ? unserialize($serializedTask) : null;
 
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {}
         return null;
     }
 
     /**
      * @return mixed|null
+     * @throws Exception
      */
     public function fetchScheduled() {
 
         // Fetch the next task that is due
-        $now = time();
+        $timezone = date_default_timezone_get();
+        $now = (new \DateTime('now', $timezone))->getTimestamp();
 
         try {
 
@@ -172,7 +177,7 @@ class RedisQueue implements QueueInterface
                 }
             }
 
-        } catch (\Exception $e){}
+        } catch (Exception $e){}
 
         return null;
     }
