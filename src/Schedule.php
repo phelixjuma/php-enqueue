@@ -113,14 +113,14 @@ class Schedule  {
             $runDates = $this->cron->getMultipleRunDates($total, $currentTime, $invert, $allowCurrentDate, $this->timezone);
 
             return array_filter($runDates, function($date) use($today) {
-                return $date >= $today && $date <= $this->last_date;
+                return !empty($this->last_date) ? $date >= $today && $date <= $this->last_date : $date >= $today;
             });
 
         } else {
 
             return array_filter($this->specific_dates, function($date) use ($today) {
                 $dt = new \DateTime($date, $this->timezone);
-                return $dt >= $today && $dt <= $this->last_date;
+                return !empty($this->last_date) ? $dt >= $today && $dt <= $this->last_date : $dt >= $today;
             });
         }
     }

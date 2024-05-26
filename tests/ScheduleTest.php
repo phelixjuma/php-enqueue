@@ -19,10 +19,10 @@ class ScheduleTest extends TestCase
         $timezone = "Africa/Nairobi";
         $now = (new \DateTime("now", new \DateTimeZone($timezone)))->format("Y-m-d H:i:sP");
         $specific_dates = ['2024-05-27', '2024-05-30'];
-        $expression = '0 10 8 ? * 1/1 *';
+        $expression = '0 0 12 ? 1/1 SUN#2 *';
         $lastDate = "2024-05-28 07:10:00";
 
-        $schedule = new Schedule(null, $expression, $lastDate, $timezone);
+        $schedule = new Schedule(null, $expression, null, $timezone);
 
         print "\ncurrent time: $now\n";
 
