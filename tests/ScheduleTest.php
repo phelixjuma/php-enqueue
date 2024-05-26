@@ -3,6 +3,7 @@ namespace Phelixjuma\Enqueue\Tests;
 
 
 use Phelixjuma\Enqueue\QuartzCronExpression\CronExpression;
+use Phelixjuma\Enqueue\Schedule;
 use PHPUnit\Framework\TestCase;
 
 class ScheduleTest extends TestCase
@@ -14,25 +15,24 @@ class ScheduleTest extends TestCase
 //        $expression = '50 5 12 MAY ?'; // This will run every 10 seconds
 //        $cron = new \Cron\CronExpression($expression);
 
-        $now = date("Y-m-d H:i:s", time());
+        //$timezone = "UTC";
+        $timezone = "Africa/Nairobi";
+        $now = (new \DateTime("now", new \DateTimeZone($timezone)))->format("Y-m-d H:i:sP");
+        $specific_dates = ['2024-05-27', '2024-05-30'];
+        $expression = '0 10 8 ? * 1/1 *';
+        $lastDate = "2024-05-28 07:10:00";
+
+        $schedule = new Schedule(null, $expression, $lastDate, $timezone);
+
         print "\ncurrent time: $now\n";
 
-        $expression = '9/8 0 0 ? * * *'; // This will run every 10 seconds
-        $cron = new CronExpression($expression);
-
         // Get the next run date
-        $allRunDates = $cron->getMultipleRunDates(5, 'now', false, true);
+        $allRunDates = $schedule->getNextRunDates(5);
         print_r($allRunDates);
-        $nextDate = $cron->getNextRunDate()->format("Y-m-d H:i:s");
-        $prevDate = $cron->getPreviousRunDate()->format("Y-m-d H:i:s");
-        print "\nNext run date: $nextDate\n";
-        print "\nPrevious run date: $prevDate\n";
 
-        // Check if the cron is due to run at the current date
-        if ($cron->isDue()) {
-            echo "Cron is due to run now!\n";
-        } else {
-            echo "Cron is not due now.\n";
-        }
+        $nextDate = $schedule->nextRun;
+
+        print "\nNext run date: $nextDate\n";
+
     }
 }

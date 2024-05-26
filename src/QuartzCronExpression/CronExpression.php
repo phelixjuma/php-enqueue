@@ -303,7 +303,7 @@ class CronExpression
      *
      * @return \DateTime
      *
-     * @see \Cron\CronExpression::getNextRunDate
+     * @see getNextRunDate
      */
     public function getPreviousRunDate($currentTime = 'now', int $nth = 0, bool $allowCurrentDate = false, $timeZone = null): DateTime
     {
@@ -563,14 +563,18 @@ class CronExpression
      * Workout what timeZone should be used.
      *
      * @param string|\DateTimeInterface|null $currentTime Relative calculation date
-     * @param string|null $timeZone TimeZone to use instead of the system default
+     * @param mixed $timeZone TimeZone to use instead of the system default
      *
      * @return string
      */
-    protected function determineTimeZone($currentTime, ?string $timeZone): string
+    protected function determineTimeZone($currentTime, $timeZone): string
     {
         if (null !== $timeZone) {
-            return $timeZone;
+            if ($timeZone instanceof DateTimeZone) {
+                return $timeZone->getName();
+            } elseif(is_string($timeZone)) {
+                return (new DateTimeZone($timeZone))->getName();
+            }
         }
 
         if ($currentTime instanceof DateTimeInterface) {
