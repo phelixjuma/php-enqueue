@@ -202,8 +202,6 @@ class Task
 
         } catch (Exception | \Throwable  $e) {
 
-            print "\nError in task execution: {$e->getMessage()}\n";
-
             $retries = $this->getRetries();
 
             if ($retries < $maxRetries) {
@@ -222,7 +220,7 @@ class Task
                 // Failed, we mark as failed
                 $queue->fail($this);
 
-                $logger->error('Failed with error', ['error' => $e->getMessage()]);
+                $logger->error('Failed with error', ['message' => $e->getMessage(), 'line' => $e->getLine(), 'file' => $e->getFile(), 'trace' => $e->getTrace()]);
 
                 $this->setStatus(self::STATUS_FAILED);
             }

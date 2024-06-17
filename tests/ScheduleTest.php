@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 class ScheduleTest extends TestCase
 {
+    /**
+     * @throws \Exception
+     */
     public function testSchedule()
     {
 
@@ -18,9 +21,10 @@ class ScheduleTest extends TestCase
         //$timezone = "UTC";
         $timezone = "Africa/Nairobi";
         $now = (new \DateTime("now", new \DateTimeZone($timezone)))->format("Y-m-d H:i:sP");
-        $specific_dates = ['2024-05-27', '2024-05-30'];
-        $expression = '0 0 12 ? 1/1 SUN#2 *';
-        $lastDate = "2024-05-28 07:10:00";
+        $specific_dates = ['2024-05-26 16:20:00', '2024-05-26 16:25:00'];
+        //$expression = '0 0 0 2L 1/1 ? *';
+        $expression = '0 0 0 L-2 1/1 ? *';
+        $lastDate = "2024-05-26 16:22:00";
 
         $schedule = new Schedule(null, $expression, null, $timezone);
 
