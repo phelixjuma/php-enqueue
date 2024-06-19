@@ -65,6 +65,7 @@ class DayOfWeekField extends AbstractField
 
         $currentYear = (int) $date->format('Y');
         $currentMonth = (int) $date->format('m');
+        $currentDay = (int) $date->format('j');
         $lastDayOfMonth = (int) $date->format('t');
 
         // Find out if this is the last specific weekday of the month
@@ -124,6 +125,63 @@ class DayOfWeekField extends AbstractField
             return (int) $date->format('j') === $currentDay;
         }
 
+        // Handle DOW* for multiples eg MON*2 for every 2 mondays
+        if (strpos($value, '*')) {
+
+            // Get the first week of the year as the start week by default
+            $startWeek = (new \DateTime())->setISODate($currentYear, 1)->format('W');
+
+            [$weekday, $multiplesPart] = explode('*', $value);
+
+            if (str_contains($multiplesPart, "/")) {
+                $multiplesPart = explode("/", $multiplesPart);
+
+                // Start week has been set. We use it
+                $startWeek = $multiplesPart[0];
+                $nth = $multiplesPart[1];
+
+            } else {
+                $nth = $multiplesPart;
+            }
+
+            if (!is_numeric($nth)) {
+                throw new InvalidArgumentException("Multiples weekdays must be numeric, {$nth} given");
+            } else {
+                $nth = (int) $nth;
+            }
+
+            if ($nth <= 0 || $nth > 56) {
+                throw new InvalidArgumentException("nth value must be between 0 and 56, {$nth} given");
+            }
+
+            // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
+            if ('0' === $weekday) {
+                $weekday = 7;
+            }
+
+            $weekday = (int) $this->convertLiterals((string) $weekday);
+
+            // Validate the multiples fields
+            if ($weekday < 0 || $weekday > 7) {
+                throw new InvalidArgumentException("Weekday must be a value between 0 and 7. {$weekday} given");
+            }
+
+            // The current weekday must match the targeted weekday to proceed
+            if ((int) $date->format('N') !== $weekday) {
+                return false;
+            }
+
+            // Get the current week number and year
+            $currentWeek = (int) $date->format('W');
+
+            // Calculate if current week is a multiple of nth weeks
+            if (($currentWeek - $startWeek) % $nth === 0) {
+                return true;
+            }
+
+            return false;
+        }
+
         // Handle day of the week values
         if (false !== strpos($value, '-')) {
             $parts = explode('-', $value);
@@ -150,10 +208,10 @@ class DayOfWeekField extends AbstractField
     public function increment(DateTimeInterface &$date, $invert = false, $parts = null): FieldInterface
     {
         if (! $invert) {
-            $date = $date->add(new \DateInterval('P1D'));
+            $date = $date->add(new \DateInterval("P1D"));
             $date = $date->setTime(0, 0);
         } else {
-            $date = $date->sub(new \DateInterval('P1D'));
+            $date = $date->sub(new \DateInterval("P1D"));
             $date = $date->setTime(23, 59);
         }
 
@@ -182,6 +240,27 @@ class DayOfWeekField extends AbstractField
                 }
             }
 
+            // Handle the DOW* multiples part value
+            if (false !== strpos($value, '*')) {
+                $chunks = explode('*', $value);
+                $chunks[0] = $this->convertLiterals($chunks[0]);
+
+                $firstPartValid = parent::validate($chunks[0]);
+                if (str_contains($chunks[1], "/")) {
+                    $stepParts = explode("/", $chunks[1]);
+
+                    $secondPartValid = is_numeric($stepParts[0]) && $stepParts[0] >=0 && $stepParts[0] <= 56 &&
+                        is_numeric($stepParts[1]) && $stepParts[1] >=0 && $stepParts[1] <= 56;
+
+                } else {
+                    $secondPartValid = is_numeric($chunks[1]) && $chunks[1] >=0 && $chunks[1] <= 56;
+                }
+
+                if ($firstPartValid && $secondPartValid) {
+                    return true;
+                }
+            }
+
             if (preg_match('/^(.*)L$/', $value, $matches)) {
                 return $this->validate($matches[1]);
             }
@@ -189,6 +268,6 @@ class DayOfWeekField extends AbstractField
             return false;
         }
 
-        return $basicChecks;
+        return true;
     }
 }
