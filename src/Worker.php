@@ -79,9 +79,6 @@ class Worker
 
         while (true) {
 
-            // Check for signals and handle them
-            pcntl_signal_dispatch();
-
             if ($this->shouldTerminate) {
                 $this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
                 break;
@@ -99,6 +96,9 @@ class Worker
 
                         // Set the status
                         $task->setStatus(Task::STATUS_PROCESSING);
+
+                        // Check for signals and handle them
+                        pcntl_signal_dispatch();
 
                         // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
@@ -171,9 +171,6 @@ class Worker
 
         while (true) {
 
-            // Check for signals and handle them
-            pcntl_signal_dispatch();
-
             if ($this->shouldTerminate) {
                 $this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
                 break;
@@ -204,6 +201,9 @@ class Worker
 
                         // Set the status
                         $task->setStatus(Task::STATUS_PROCESSING);
+
+                        // Check for signals and handle them
+                        pcntl_signal_dispatch();
 
                         // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
