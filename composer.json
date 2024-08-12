@@ -12,7 +12,8 @@
     "doctrine/annotations": "^2.0",
     "pda/pheanstalk": "^5.0",
     "symfony/console": "^6.0",
-    "webmozart/assert": "^1.11"
+    "webmozart/assert": "^1.11",
+    "ext-pcntl": "*"
   },
   "scripts": {
     "test": "vendor/bin/phpunit"

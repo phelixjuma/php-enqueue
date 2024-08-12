@@ -15,6 +15,9 @@ class Worker
     private $maxJobs;
     private LoggerInterface $logger;
 
+    private $pid;
+    private bool $shouldTerminate = false;
+
     /**
      * @param QueueInterface $queue
      * @param $maxRetries
@@ -29,6 +32,27 @@ class Worker
         $this->maxRetries = $maxRetries;
         $this->maxTime = $maxTime;
         $this->maxJobs = $maxJobs;
+
+        $this->pid = getmypid();
+
+        // Register signal handlers
+        pcntl_signal(SIGINT, [$this, 'handleSignal']);
+        pcntl_signal(SIGTERM, [$this, 'handleSignal']);
+    }
+
+    /**
+     * Signal handler to handle termination signals
+     * @param int $signal
+     */
+    public function handleSignal(int $signal): void
+    {
+        switch ($signal) {
+            case SIGINT:
+            case SIGTERM:
+                $this->logger->info("Received termination signal for process {$this->pid}. Cleaning up...");
+                $this->shouldTerminate = true;
+                break;
+        }
     }
 
     /**
@@ -55,6 +79,14 @@ class Worker
 
         while (true) {
 
+            // Check for signals and handle them
+            pcntl_signal_dispatch();
+
+            if ($this->shouldTerminate) {
+                $this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
+                break;
+            }
+
             try {
 
                 // Handle immediate tasks
@@ -62,8 +94,13 @@ class Worker
 
                     if ($task instanceof Task || $task instanceof Event) {
 
+                        // Set the process id
+                        $task->setProcessId($this->pid);
+
+                        // Set the status
                         $task->setStatus(Task::STATUS_PROCESSING);
 
+                        // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
 
                         // Increment jobs count
@@ -134,6 +171,14 @@ class Worker
 
         while (true) {
 
+            // Check for signals and handle them
+            pcntl_signal_dispatch();
+
+            if ($this->shouldTerminate) {
+                $this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
+                break;
+            }
+
             $this->queue->getClient()->watch($tube);
 
             // this hangs until a Job is produced.
@@ -154,8 +199,13 @@ class Worker
 
                     if ($task instanceof Task || $task instanceof Event) {
 
+                        // Set the process id
+                        $task->setProcessId($this->pid);
+
+                        // Set the status
                         $task->setStatus(Task::STATUS_PROCESSING);
 
+                        // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
 
                         // Increment jobs count
@@ -175,6 +225,7 @@ class Worker
                 }
 
             } catch (\Exception $e) {
+
                 // handle exception.
                 $this->logger->error($e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile() . " Trace: " . $e->getTraceAsString());
 

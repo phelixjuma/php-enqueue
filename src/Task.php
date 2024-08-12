@@ -20,6 +20,7 @@ class Task
     protected $listenerNamespace;
     private $id;
     private $executionId;
+    private $processId;
     private $status;
     private $retries = 0;
     private $created_at;
@@ -77,12 +78,21 @@ class Task
         return $this->executionId;
     }
 
+    public function getProcessId()
+    {
+        return $this->processId;
+    }
+
     /**
      * @return void
      * @throws Exception
      */
     public function setExecutionId() {
         $this->executionId = self::generateUUIDv4();
+    }
+
+    public function setProcessId($pid) {
+        $this->processId = $pid;
     }
 
     public function getKey() {
