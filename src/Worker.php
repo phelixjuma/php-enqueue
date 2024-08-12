@@ -35,6 +35,9 @@ class Worker
 
         $this->pid = getmypid();
 
+        // Enable asynchronous signal handling
+        pcntl_async_signals(true);
+
         // Register signal handlers
         pcntl_signal(SIGINT, [$this, 'handleSignal']);
         pcntl_signal(SIGTERM, [$this, 'handleSignal']);
@@ -98,7 +101,7 @@ class Worker
                         $task->setStatus(Task::STATUS_PROCESSING);
 
                         // Check for signals and handle them
-                        pcntl_signal_dispatch();
+                        //pcntl_signal_dispatch();
 
                         // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
@@ -203,7 +206,7 @@ class Worker
                         $task->setStatus(Task::STATUS_PROCESSING);
 
                         // Check for signals and handle them
-                        pcntl_signal_dispatch();
+                        //pcntl_signal_dispatch();
 
                         // Execute
                         $task->execute($this->queue, $this->logger, $this->maxRetries);
