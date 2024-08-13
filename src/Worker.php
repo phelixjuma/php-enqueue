@@ -33,6 +33,9 @@ class Worker
         $this->maxTime = $maxTime;
         $this->maxJobs = $maxJobs;
 
+        // Set the maximum time in seconds that this script should not surpass
+        set_time_limit($this->maxTime);
+
         $this->pid = getmypid();
 
         // Enable asynchronous signal handling
