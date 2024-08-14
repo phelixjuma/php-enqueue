@@ -55,7 +55,7 @@ class Worker
         switch ($signal) {
             case SIGINT:
             case SIGTERM:
-                $this->logger->info("Received termination signal for process {$this->pid}. Cleaning up...");
+                //$this->logger->info("Received termination signal for process {$this->pid}. Cleaning up...");
                 $this->shouldTerminate = true;
                 break;
         }
@@ -86,7 +86,7 @@ class Worker
         while (true) {
 
             if ($this->shouldTerminate) {
-                $this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
+                //$this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
                 break;
             }
 
