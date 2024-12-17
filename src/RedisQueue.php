@@ -116,9 +116,8 @@ class RedisQueue implements QueueInterface
                 $this->client->zrem($this->queue_name, $key);
 
                 $this->client->del($key);
-
-                return true;
             }
+            return true;
         } catch (Exception $e) {
         }
         return false;
