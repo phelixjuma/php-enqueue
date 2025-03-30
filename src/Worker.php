@@ -145,7 +145,7 @@ class Worker
             if (!empty($this->maxTime) && $this->maxTime > 0) {
 
                 if ((microtime(true) - $startTime) > $this->maxTime) {
-                    exit();
+                    break;
                 }
             }
 
@@ -153,12 +153,12 @@ class Worker
             if (!empty($this->maxJobs) && $this->maxJobs > 0) {
 
                 if ($doneJobs > $this->maxJobs) {
-                    exit();
+                    break;
                 }
             }
 
-            // sleep for 3 second before proceeding.
-            usleep(3000000);
+            // sleep for 1 second before proceeding.
+            usleep(1000000);
         }
 
     }
@@ -247,7 +247,7 @@ class Worker
             if (!empty($this->maxTime) && $this->maxTime > 0) {
 
                 if ((microtime(true) - $startTime) > $this->maxTime) {
-                    exit();
+                    break;
                 }
             }
 
@@ -255,12 +255,12 @@ class Worker
             if (!empty($this->maxJobs) && $this->maxJobs > 0) {
 
                 if ($doneJobs > $this->maxJobs) {
-                    exit();
+                    break;
                 }
             }
 
-            // sleep for 3 second before proceeding.
-            usleep(3000000);
+            // sleep for 1 second before proceeding.
+            usleep(1000000);
         }
 
     }
