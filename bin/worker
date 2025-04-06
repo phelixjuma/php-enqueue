@@ -66,17 +66,17 @@ if ($queueEngine == 'beanstalkd') {
         'scheme' => 'tls',  
         'host' => $redisHost,
         'port' => $redisPort,
-        'timeout' => 5,           // Short connection timeout
-        'read_write_timeout' => 30,  // Longer read timeout for task processing
-        'persistent' => true     // Use persistent connections
+        'timeout' => 5,         
+        'read_write_timeout' => 3, 
+        'persistent' => true 
     ];
 
     $options = [
         'parameters' => [
             'username' => $redisUsername,
             'password' => $redisPassword,
-            'timeout' => 5.0,     // Same as above but as float
-            'read_write_timeout' => 10.0
+            'timeout' => 5.0,     
+            'read_write_timeout' => 3
         ],
         'ssl' => [
             'verify_peer' => true, 
