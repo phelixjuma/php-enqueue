@@ -85,12 +85,15 @@ if ($queueEngine == 'beanstalkd') {
         
         $queue = new RedisQueue($redis);
 
+        print("Successfully connected to AWS Valkey Redis");
+        print_r($queue->list());
+
     } catch (\Predis\Connection\ConnectionException $e) {
         $log->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
-        throw new Exception("Failed to establish connection with AWS Valkey Redis queue service: " . $e->getMessage());
+        print("Failed to establish connection with AWS Valkey Redis queue service: " . $e->getMessage());
     } catch (Exception $e) {
         $log->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
-        throw new Exception("Unexpected error occurred while setting up AWS Valkey Redis queue: " . $e->getMessage());
+        print("Unexpected error occurred while setting up AWS Valkey Redis queue: " . $e->getMessage());
     }
 }
 
