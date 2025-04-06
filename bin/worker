@@ -83,7 +83,7 @@ if ($queueEngine == 'beanstalkd') {
         
         $redis = new Client($parameters, $options);
         
-        $queue = new RedisQueue($redis);
+        $queue = new RedisQueue($redis, $queueName);
 
         print("Successfully connected to AWS Valkey Redis");
         print_r($queue->list());
