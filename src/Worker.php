@@ -57,8 +57,7 @@ class Worker
             case SIGTERM:
                 $this->logger->info("Received termination signal, finishing current task...");
                 $this->shouldTerminate = true;
-                // Allow up to 5 minutes for current task to complete
-                sleep(300);
+                // Terminate immediately
                 exit(0);
         }
     }
