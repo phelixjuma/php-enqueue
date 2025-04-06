@@ -56,6 +56,8 @@ class RedisQueue implements QueueInterface
 
             $id = $this->client->rpush($this->queue_name, [serialize($task),'']);
 
+            echo "Task enqueued in queue: ".$this->queue_name." with id: ".$task->getId();
+
             return !empty($id);
 
         } catch (Exception $e) {
