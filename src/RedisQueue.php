@@ -4,16 +4,19 @@ namespace Phelixjuma\Enqueue;
 
 use Exception;
 use Predis\Client;
+use Monolog\Logger;
 
 class RedisQueue implements QueueInterface
 {
     private Client $client;
+    private Logger $logger;
     private $queue_name;
     private string $failed_queue_name;
 
-    public function __construct(Client $client, $queueName = 'default')
+    public function __construct(Client $client, $queueName = 'default',  Logger $logger)
     {
         $this->client = $client;
+        $this->logger = $logger;
         $this->queue_name = $queueName;
         $this->failed_queue_name = $queueName . '.failed';
     }
@@ -56,12 +59,10 @@ class RedisQueue implements QueueInterface
 
             $id = $this->client->rpush($this->queue_name, [serialize($task),'']);
 
-            echo "Task enqueued in queue: ".$this->queue_name." with id: ".$task->getId();
-
             return !empty($id);
 
         } catch (Exception $e) {
-            echo "Error enqueueing task: " . $e->getMessage();
+            $this->logger->error("Error enqueueing task: " . $e->getMessage());
         }
         return false;
     }
@@ -90,7 +91,9 @@ class RedisQueue implements QueueInterface
 
                 return true;
 
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+                $this->logger->error("Error enqueueing schedule task: " . $e->getMessage());
+            }
         }
         return false;
     }
@@ -123,6 +126,7 @@ class RedisQueue implements QueueInterface
             }
             return true;
         } catch (Exception $e) {
+            $this->logger->error("Error deleting task: " . $e->getMessage());
         }
         return false;
     }
@@ -136,7 +140,9 @@ class RedisQueue implements QueueInterface
         // We add the task to the failed queue
         try {
             return $this->client->rpush($this->failed_queue_name, [serialize($task), '']);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            $this->logger->error("Error enqueueing task: " . $e->getMessage());
+        }
         return false;
     }
 
@@ -151,7 +157,9 @@ class RedisQueue implements QueueInterface
 
             return $serializedTask ? unserialize($serializedTask) : null;
 
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            $this->logger->error("Error fetching task: " . $e->getMessage());
+        }
         return null;
     }
 
@@ -180,7 +188,9 @@ class RedisQueue implements QueueInterface
                 }
             }
 
-        } catch (Exception $e){}
+        } catch (Exception $e){
+            $this->logger->error("Error fetching scheduled task: " . $e->getMessage());
+        }
 
         return null;
     }

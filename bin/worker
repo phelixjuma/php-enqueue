@@ -53,7 +53,7 @@ if ($queueEngine == 'beanstalkd') {
 
     $redis = new Client("tcp://$redisHost:$redisPort");
 
-    $queue = new RedisQueue($redis, $queueName);
+    $queue = new RedisQueue($redis, $queueName,  $log);
     
 } elseif($queueEngine == 'aws-valkey') {
 
@@ -64,14 +64,19 @@ if ($queueEngine == 'beanstalkd') {
 
     $parameters = [
         'scheme' => 'tls',  
-        'host' =>   $redisHost,
-        'port' =>  $redisPort
+        'host' => $redisHost,
+        'port' => $redisPort,
+        'timeout' => 5,           // Short connection timeout
+        'read_write_timeout' => 30,  // Longer read timeout for task processing
+        'persistent' => true     // Use persistent connections
     ];
 
     $options = [
         'parameters' => [
             'username' => $redisUsername,
-            'password' => $redisPassword
+            'password' => $redisPassword,
+            'timeout' => 5.0,     // Same as above but as float
+            'read_write_timeout' => 10.0
         ],
         'ssl' => [
             'verify_peer' => true, 
@@ -83,17 +88,12 @@ if ($queueEngine == 'beanstalkd') {
         
         $redis = new Client($parameters, $options);
         
-        $queue = new RedisQueue($redis, $queueName);
-
-        print("Successfully connected to AWS Valkey Redis");
-        print_r($queue->list());
+        $queue = new RedisQueue($redis, $queueName,  $log);
 
     } catch (\Predis\Connection\ConnectionException $e) {
         $log->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
-        print("Failed to establish connection with AWS Valkey Redis queue service: " . $e->getMessage());
     } catch (Exception $e) {
         $log->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
-        print("Unexpected error occurred while setting up AWS Valkey Redis queue: " . $e->getMessage());
     }
 }
 

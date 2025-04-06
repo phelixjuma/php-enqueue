@@ -55,9 +55,11 @@ class Worker
         switch ($signal) {
             case SIGINT:
             case SIGTERM:
-                //$this->logger->info("Received termination signal for process {$this->pid}. Cleaning up...");
+                $this->logger->info("Received termination signal, finishing current task...");
                 $this->shouldTerminate = true;
-                break;
+                // Allow up to 5 minutes for current task to complete
+                sleep(300);
+                exit(0);
         }
     }
 
@@ -79,23 +81,29 @@ class Worker
      */
     private function startRedisWorker(): void
     {
-
         $startTime = microtime(true);
         $doneJobs = 0;
+        $lastPingTime = time();
+        $pingInterval = 30; // Check connection every 30 seconds
 
         while (true) {
+            $currentTime = time();
 
-            if ($this->shouldTerminate) {
-                //$this->logger->info("Worker of PID {$this->pid} is shutting down gracefully.");
-                break;
+            // Periodic connection check
+            if ($currentTime - $lastPingTime > $pingInterval) {
+                try {
+                    $this->queue->getClient()->ping();
+                    $lastPingTime = $currentTime;
+                } catch (\Exception $e) {
+                    $this->logger->error("Lost connection to ValKey: " . $e->getMessage());
+                    // Exit worker, let supervisor restart it
+                    break;
+                }
             }
 
             try {
-
-                // Handle immediate tasks
                 while ($task = $this->queue->fetch()) {
-
-                    $this->logger->info("Found and processing task: ".$task->getId());
+                    $this->logger->info("Worker of PID {$this->pid} found and processing task: ".$task->getId());
             
                     if ($task instanceof Task || $task instanceof Event) {
 
@@ -138,9 +146,10 @@ class Worker
                     }
                 }
 
-
-            } catch (\Exception | \Throwable  $e) {
-                $this->logger->error($e->getMessage()." on line ".$e->getLine(). " in ".$e->getFile()." Trace: ".$e->getTraceAsString());
+            } catch (\Exception $e) {
+                $this->logger->error("Error processing task: " . $e->getMessage());
+                // Short sleep on errors to prevent tight loops
+                sleep(5);
             }
 
             // Check if max time is set
@@ -159,10 +168,8 @@ class Worker
                 }
             }
 
-            // sleep for 1 second before proceeding.
-            usleep(1000000);
+            usleep(1000000); // 1 second sleep between checks
         }
-
     }
 
     /**
@@ -230,6 +237,7 @@ class Worker
                     $job = $this->queue->getClient()->peek($job);
                     $this->queue->getClient()->delete($job);
                 } catch (\Exception $e) {
+                    $this->logger->error("Error deleting job: " . $e->getMessage());
                 }
 
             } catch (\Exception $e) {
@@ -242,6 +250,7 @@ class Worker
                     $job = $this->queue->getClient()->peek($job);
                     $this->queue->getClient()->release($job);
                 } catch (\Exception $e) {
+                    $this->logger->error("Error releasing job: " . $e->getMessage());
                 }
             }
 
