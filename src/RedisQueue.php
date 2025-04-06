@@ -40,6 +40,14 @@ class RedisQueue implements QueueInterface
     }
 
     /**
+     * @return string
+     */
+    public function getQueue(): string
+    {
+        return $this->queue_name;
+    }
+
+    /**
      * @return Client
      */
     public function getClient(): Client {

@@ -34,9 +34,9 @@ class Task
     /**
      * @param $job
      * @param $args
-     * @param int $delay
-     * @param int $timeToRelease
-     * @param int $priority
+     * @param string $delay
+     * @param string $timeToRelease
+     * @param string $priority
      * @param $listenerDir
      * @param $listenerNamespace
      * @param $id
@@ -99,7 +99,7 @@ class Task
         return "TASK_" . $this->getId();
     }
 
-    public function getStatus()
+    public function getStatus(): string
     {
         return $this->status;
     }
@@ -109,7 +109,7 @@ class Task
         $this->status = $status;
     }
 
-    public function getRetries()
+    public function getRetries(): int
     {
         return $this->retries;
     }

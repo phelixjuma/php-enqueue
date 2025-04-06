@@ -102,8 +102,7 @@ class Worker
 
             try {
                 while ($task = $this->queue->fetch()) {
-                    $this->logger->info("Worker of PID {$this->pid} found and processing task: ".$task->getId());
-            
+                    
                     if ($task instanceof Task || $task instanceof Event) {
 
                         // Set the process id
@@ -121,9 +120,6 @@ class Worker
                         // Increment jobs count
                         $doneJobs++;
 
-                    } else {
-                        // We fail invalid tasks
-                        $this->queue->fail($task);
                     }
                 }
 
