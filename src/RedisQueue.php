@@ -37,6 +37,13 @@ class RedisQueue implements QueueInterface
     }
 
     /**
+     * @return Client
+     */
+    public function getClient(): Client {
+        return $this->client;
+    }       
+
+    /**
      * @param Task $task
      * @return bool
      */
