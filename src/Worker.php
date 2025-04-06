@@ -95,6 +95,8 @@ class Worker
                 // Handle immediate tasks
                 while ($task = $this->queue->fetch()) {
 
+                    $this->logger->info("Found and processing task: ".$task->getId());
+            
                     if ($task instanceof Task || $task instanceof Event) {
 
                         // Set the process id

@@ -58,7 +58,9 @@ class RedisQueue implements QueueInterface
 
             return !empty($id);
 
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            echo "Error enqueueing task: " . $e->getMessage();
+        }
         return false;
     }
 
