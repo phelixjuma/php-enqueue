@@ -18,10 +18,11 @@ use Predis\Client;
 use Dotenv\Dotenv;
 use Monolog\Logger;
 
-$options = getopt('', ['engine:', 'queue:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:']);
+$options = getopt('', ['engine:', 'queue:', 'is_scheduled:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:']);
 
 $queueEngine = $options['engine'] ?? "redis";
 $queueName = $options['queue'] ?? null;
+$isScheduled = isset($options['is_scheduled']) && $options['is_scheduled'] == '1';
 $logPath = $options['log_path'] ?? null;
 $logLevel = $options['log_level'] ?? null;
 $maxRetries = $options['max_retries'] ?? null;
@@ -99,4 +100,5 @@ if ($queueEngine == 'beanstalkd') {
 }
 
 $worker = new Worker($queue, $maxRetries, $maxTime, $maxJobs, $logger);
+$worker->setScheduledQueue($isScheduled);
 $worker->start();

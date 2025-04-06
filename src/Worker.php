@@ -17,6 +17,7 @@ class Worker
 
     private $pid;
     private bool $shouldTerminate = false;
+    private bool $isScheduledQueue = false;
 
     /**
      * @param QueueInterface $queue
@@ -75,6 +76,11 @@ class Worker
         }
     }
 
+    public function setScheduledQueue(bool $isScheduled): self {
+        $this->isScheduledQueue = $isScheduled;
+        return $this;
+    }
+
     /**
      * @return void
      */
@@ -101,49 +107,31 @@ class Worker
             }
 
             try {
-                while ($task = $this->queue->fetch()) {
-                    
-                    if ($task instanceof Task || $task instanceof Event) {
-
-                        // Set the process id
-                        $task->setProcessId($this->pid);
-
-                        // Set the status
-                        $task->setStatus(Task::STATUS_PROCESSING);
-
-                        // Check for signals and handle them
-                        //pcntl_signal_dispatch();
-
-                        // Execute
-                        $task->execute($this->queue, $this->logger, $this->maxRetries);
-
-                        // Increment jobs count
-                        $doneJobs++;
-
+                if ($this->isScheduledQueue) {
+                    // Handle only scheduled tasks
+                    while ($task = $this->queue->fetchScheduled()) {
+                        if ($task instanceof RepeatTask) {
+                            $task->setStatus(Task::STATUS_PROCESSING);
+                            $task->execute($this->queue, $this->logger, $this->maxRetries);
+                            $doneJobs++;
+                        } else {
+                            $this->queue->fail($task);
+                        }
                     }
-                }
-
-                // Handle scheduled tasks
-                while ($task = $this->queue->fetchScheduled()) {
-
-                    if ($task instanceof RepeatTask) {
-
-                        $task->setStatus(Task::STATUS_PROCESSING);
-
-                        $task->execute($this->queue, $this->logger, $this->maxRetries);
-
-                        // Increment jobs count
-                        $doneJobs++;
-
-                    } else {
-                        // We fail invalid tasks
-                        $this->queue->fail($task);
+                } else {
+                    // Handle only regular tasks
+                    while ($task = $this->queue->fetch()) {
+                        if ($task instanceof Task || $task instanceof Event) {
+                            $task->setProcessId($this->pid);
+                            $task->setStatus(Task::STATUS_PROCESSING);
+                            $task->execute($this->queue, $this->logger, $this->maxRetries);
+                            $doneJobs++;
+                        }
                     }
                 }
 
             } catch (\Exception $e) {
                 $this->logger->error("Error processing task: " . $e->getMessage());
-                // Short sleep on errors to prevent tight loops
                 sleep(5);
             }
 
