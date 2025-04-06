@@ -2,6 +2,8 @@
 
 namespace Phelixjuma\Enqueue;
 
+use Predis\Client;
+use Pheanstalk\Pheanstalk;
 
 interface QueueInterface
 { 
@@ -17,5 +19,6 @@ interface QueueInterface
      */
     public function enqueue(Task $task): bool;
     public function fail(Task $task): bool;
+    public function getClient(): Client|Pheanstalk;
 
 }

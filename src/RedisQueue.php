@@ -7,6 +7,7 @@ use Predis\Client;
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Level;
+
 class RedisQueue implements QueueInterface
 {
     private Client $client;
