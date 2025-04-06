@@ -82,4 +82,14 @@ class BeanstalkdQueue implements QueueInterface
 
         return false;
     }
+
+    public function fetch(): ?Task
+    {
+        return null;
+    }
+    
+    public function fetchScheduled(): ?Task
+    {
+        return null;
+    }
 }

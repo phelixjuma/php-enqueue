@@ -7,6 +7,7 @@ use Predis\Client;
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Level;
+use Phelixjuma\Enqueue\Task;
 
 class RedisQueue implements QueueInterface
 {
@@ -156,16 +157,13 @@ class RedisQueue implements QueueInterface
     }
 
     /**
-     * @return mixed|null
+     * @return Task|null
      */
-    public function fetch()
+    public function fetch(): ?Task
     {
         try {
-
             $serializedTask = $this->client->lpop($this->queue_name);
-
             return $serializedTask ? unserialize($serializedTask) : null;
-
         } catch (Exception $e) {
             $this->logger->error("Error fetching task: " . $e->getMessage());
         }
@@ -173,11 +171,11 @@ class RedisQueue implements QueueInterface
     }
 
     /**
-     * @return mixed|null
+     * @return Task|null
      * @throws Exception
      */
-    public function fetchScheduled() {
-
+    public function fetchScheduled(): ?Task
+    {
         // Fetch the next task that is due
         $timezone = date_default_timezone_get();
         $now = (new \DateTime('now', new \DateTimeZone($timezone)))->getTimestamp();
@@ -196,7 +194,6 @@ class RedisQueue implements QueueInterface
                     return $task;
                 }
             }
-
         } catch (Exception $e){
             $this->logger->error("Error fetching scheduled task: " . $e->getMessage());
         }
