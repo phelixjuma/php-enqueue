@@ -11,16 +11,68 @@ require $autoloadFile;
 use Phelixjuma\Enqueue\Manager;
 use Phelixjuma\Enqueue\RedisQueue;
 use Dotenv\Dotenv;
+use Monolog\Logger;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Level;
 
 $dotenv = Dotenv::createImmutable(getcwd());
 $dotenv->load();
 
+$redisEngine = getenv('REDIS_ENGINE') ?: ($_ENV['REDIS_ENGINE'] ?? "");
 $redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? "");
 $redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? "");
+$redisUsername = getenv('REDIS_USERNAME') ?: ($_ENV['REDIS_USERNAME'] ?? "");
+$redisPassword = getenv('REDIS_PASSWORD') ?: ($_ENV['REDIS_PASSWORD'] ?? "");
+$logPath = getenv('LOG_PATH') ?: ($_ENV['LOG_PATH'] ?? "");
+$queueName = getenv('QUEUE_NAME') ?: ($_ENV['QUEUE_NAME'] ?? "");
 
-$redis = new Predis\Client("tcp://$redisHost:$redisPort");
+// create a log channel
+$logger = new Logger($queueName);
+$handler = new RotatingFileHandler($logPath.'/'.$queueName.'.log', 7, Level::Debug, true, 0777, false, RotatingFileHandler::FILE_PER_DAY, '{filename}-{date}');
+$logger->pushHandler($handler);
 
-$queue = new RedisQueue($redis);
+if($queueEngine == 'aws-valkey') {
+
+    $redisHost = getenv('AWS_VALKEY_ENDPOINT') ?: ($_ENV['AWS_VALKEY_ENDPOINT'] ?? "");
+    $redisPort = getenv('AWS_VALKEY_PORT') ?: ($_ENV['AWS_VALKEY_PORT'] ?? "");
+    $redisUsername = getenv('AWS_VALKEY_USERNAME') ?: ($_ENV['AWS_VALKEY_USERNAME'] ?? "");
+    $redisPassword = getenv('AWS_VALKEY_PASSWORD') ?: ($_ENV['AWS_VALKEY_PASSWORD'] ?? "");
+
+    $parameters = [
+        'scheme' => 'tls',  
+        'host' => $redisHost,
+        'port' => $redisPort,
+        'timeout' => 5,         
+        'read_write_timeout' => 3, 
+        'persistent' => true 
+    ];
+
+    $options = [
+        'parameters' => [
+            'username' => $redisUsername,
+            'password' => $redisPassword,
+            'timeout' => 5.0,     
+            'read_write_timeout' => 3
+        ],
+        'ssl' => [
+            'verify_peer' => true, 
+            'verify_peer_name' => true
+        ]
+    ];
+
+    try {
+        $redis = new Predis\Client($parameters, $options);
+    } catch (\Predis\Connection\ConnectionException $e) {
+        $logger->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
+    } catch (Exception $e) {
+        $logger->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
+    }
+
+} else {
+    $redis = new Predis\Client("tcp://$redisHost:$redisPort");
+}
+
+$queue = new RedisQueue($redis, $logger, $queueName);
 
 $application = new Manager($queue);
 $application->run();

@@ -9,7 +9,8 @@ if (!file_exists($autoloadFile)) {
 require_once $autoloadFile;
 
 use Monolog\Handler\RotatingFileHandler;
-use Monolog\Level;use Pheanstalk\Pheanstalk;
+use Monolog\Level;
+use Pheanstalk\Pheanstalk;
 use Phelixjuma\Enqueue\BeanstalkdQueue;
 use Phelixjuma\Enqueue\Worker;
 use Phelixjuma\Enqueue\RedisQueue;
@@ -31,9 +32,9 @@ $dotenv = Dotenv::createImmutable(getcwd());
 $dotenv->load();
 
 // create a log channel
-$log = new Logger($queueName);
+$logger = new Logger($queueName);
 $handler = new RotatingFileHandler($logPath.'/'.$queueName.'.log', 7, Level::Debug, true, 0777, false, RotatingFileHandler::FILE_PER_DAY, '{filename}-{date}');
-$log->pushHandler($handler);
+$logger->pushHandler($handler);
 
 
 // initialize the queue
@@ -53,7 +54,7 @@ if ($queueEngine == 'beanstalkd') {
 
     $redis = new Client("tcp://$redisHost:$redisPort");
 
-    $queue = new RedisQueue($redis, $queueName,  $log);
+    $queue = new RedisQueue($redis,  $logger, $queueName);
     
 } elseif($queueEngine == 'aws-valkey') {
 
@@ -88,14 +89,14 @@ if ($queueEngine == 'beanstalkd') {
         
         $redis = new Client($parameters, $options);
         
-        $queue = new RedisQueue($redis, $queueName,  $log);
+        $queue = new RedisQueue($redis,  $logger, $queueName);
 
     } catch (\Predis\Connection\ConnectionException $e) {
-        $log->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
+        $logger->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
     } catch (Exception $e) {
-        $log->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
+        $logger->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
     }
 }
 
-$worker = new Worker($queue, $maxRetries, $maxTime, $maxJobs, $log);
+$worker = new Worker($queue, $maxRetries, $maxTime, $maxJobs, $logger);
 $worker->start();

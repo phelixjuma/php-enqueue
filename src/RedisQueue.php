@@ -5,7 +5,8 @@ namespace Phelixjuma\Enqueue;
 use Exception;
 use Predis\Client;
 use Monolog\Logger;
-
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Level;
 class RedisQueue implements QueueInterface
 {
     private Client $client;
@@ -13,7 +14,7 @@ class RedisQueue implements QueueInterface
     private $queue_name;
     private string $failed_queue_name;
 
-    public function __construct(Client $client, $queueName = 'default',  Logger $logger)
+    public function __construct(Client $client, Logger $logger, $queueName = 'default')
     {
         $this->client = $client;
         $this->logger = $logger;
