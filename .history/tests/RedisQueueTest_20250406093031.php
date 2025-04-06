@@ -21,10 +21,38 @@ class RedisQueueTest extends TestCase
         try {
             // Get the absolute path to the project root
             $projectRoot = dirname(__DIR__);
+            print("\nProject Root: " . $projectRoot);
+            
+            // Check if .env file exists
+            if (!file_exists($projectRoot . '/.env')) {
+                print("\n.env file not found in {$projectRoot}/.env");
+                print("\nTrying to copy .env.example to .env...");
+                
+                if (file_exists($projectRoot . '/.env.example')) {
+                    copy($projectRoot . '/.env.example', $projectRoot . '/.env');
+                    print("\nCopied .env.example to .env");
+                } else {
+                    throw new \Exception(".env.example file not found in {$projectRoot}");
+                }
+            }
 
             // Load environment variables from .env file
             $dotenv = \Dotenv\Dotenv::createImmutable($projectRoot);
             $dotenv->load();
+            
+            // Debug: Print all relevant environment variables
+            print("\n\nEnvironment File Contents:");
+            print("\n" . file_get_contents($projectRoot . '/.env'));
+            
+            print("\n\nEnvironment Variables Loaded:");
+            print("\nAWS_VALKEY_ENDPOINT: " . $_ENV['AWS_VALKEY_ENDPOINT'] ?? 'not set in $_ENV');
+            print("\nAWS_VALKEY_USERNAME: " . $_ENV['AWS_VALKEY_USERNAME'] ?? 'not set in $_ENV');
+            print("\nAWS_VALKEY_PORT: " . $_ENV['AWS_VALKEY_PORT'] ?? 'not set in $_ENV');
+            
+            print("\n\nGetenv Results:");
+            print("\nAWS_VALKEY_ENDPOINT: " . getenv('AWS_VALKEY_ENDPOINT') ?: 'not set via getenv');
+            print("\nAWS_VALKEY_USERNAME: " . getenv('AWS_VALKEY_USERNAME') ?: 'not set via getenv');
+            print("\nAWS_VALKEY_PORT: " . getenv('AWS_VALKEY_PORT') ?: 'not set via getenv');
             
             // Required environment variables for ValKey tests
             $dotenv->required([
@@ -262,14 +290,17 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        // AWS ValKey/ElastiCache connection configuration with RBAC
         $parameters = [
             'scheme' => 'tls',
             'host' => $this->valKeyEndpoint,
             'port' => $this->valKeyPort,
+            // For RBAC, username is required along with password
             'username' => $this->valKeyUsername,
             'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            // Add timeout settings
+            'read_write_timeout' => 60,
+            'timeout' => 5
         ];
 
         $options = [
@@ -278,20 +309,28 @@ class RedisQueueTest extends TestCase
                 'password' => $this->valKeyPassword
             ],
             'ssl' => [
-                'verify_peer' => false,
+                'verify_peer' => false,  // Temporarily disable SSL verification for testing
                 'verify_peer_name' => false,
-                'SNI_enabled' => true
+                'verify' => false
             ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+            'replication' => false,
+            'parameters' => [
+                'timeout' => 5.0,
+                'read_write_timeout' => 60.0
+            ]
         ];
 
-        print("\n\nConnection Details:");
+        print("\n\nTrying to connect with:");
         print("\nEndpoint: " . $this->valKeyEndpoint);
+        print("\nUsername: " . $this->valKeyUsername);
         print("\nPort: " . $this->valKeyPort);
+        print("\nTimeout settings: " . $parameters['timeout'] . "s connect, " . $parameters['read_write_timeout'] . "s read/write");
 
         try {
             $redis = new Client($parameters, $options);
+            
+            // Set connection timeout
+            $redis->connect()->setTimeout(5.0);
             
             // Verify connection by trying a simple command
             print("\nTrying PING command...");
@@ -324,6 +363,11 @@ class RedisQueueTest extends TestCase
                 print("\nPrevious Error: " . $e->getPrevious()->getMessage());
             }
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
+        } catch (\Predis\Response\ServerException $e) {
+            print("\nServer Error Details:");
+            print("\nMessage: " . $e->getMessage());
+            print("\nCode: " . $e->getCode());
+            $this->fail('Redis server error: ' . $e->getMessage());
         } catch (\Exception $e) {
             print("\nUnexpected Error:");
             print("\nType: " . get_class($e));

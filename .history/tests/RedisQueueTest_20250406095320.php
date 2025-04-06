@@ -262,36 +262,47 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        // AWS ValKey/ElastiCache connection configuration with RBAC
         $parameters = [
             'scheme' => 'tls',
-            'host' => $this->valKeyEndpoint,
+            'host' => str_replace('tls://', '', $this->valKeyEndpoint), // Remove any scheme prefix
             'port' => $this->valKeyPort,
             'username' => $this->valKeyUsername,
             'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'read_write_timeout' => 60,
+            'timeout' => 10
         ];
 
         $options = [
             'parameters' => [
                 'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
+                'password' => $this->valKeyPassword,
+                'timeout' => 10.0,
+                'read_write_timeout' => 60.0
             ],
             'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,
-                'SNI_enabled' => true
+                'SNI_enabled' => true,  // Enable SNI for AWS endpoints
+                'peer_name' => $this->valKeyEndpoint  // Set SNI hostname
             ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+            'replication' => false
         ];
 
         print("\n\nConnection Details:");
-        print("\nEndpoint: " . $this->valKeyEndpoint);
-        print("\nPort: " . $this->valKeyPort);
-
+        print("\nEndpoint: " . $parameters['host']);
+        print("\nPort: " . $parameters['port']);
+        print("\nScheme: " . $parameters['scheme']);
+        print("\nTimeout settings: " . $parameters['timeout'] . "s connect, " . $parameters['read_write_timeout'] . "s read/write");
+        print("\nSNI enabled for: " . $this->valKeyEndpoint);
+        
         try {
+            print("\n\nInitializing Redis client...");
             $redis = new Client($parameters, $options);
+            
+            print("\nAttempting TLS connection...");
+            $connection = $redis->connect();
+            print("\nTLS Connection established!");
             
             // Verify connection by trying a simple command
             print("\nTrying PING command...");
@@ -324,6 +335,11 @@ class RedisQueueTest extends TestCase
                 print("\nPrevious Error: " . $e->getPrevious()->getMessage());
             }
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
+        } catch (\Predis\Response\ServerException $e) {
+            print("\nServer Error Details:");
+            print("\nMessage: " . $e->getMessage());
+            print("\nCode: " . $e->getCode());
+            $this->fail('Redis server error: ' . $e->getMessage());
         } catch (\Exception $e) {
             print("\nUnexpected Error:");
             print("\nType: " . get_class($e));

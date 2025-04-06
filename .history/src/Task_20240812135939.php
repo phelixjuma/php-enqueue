@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 
 class Task
 {
- 
+
 
     const STATUS_PENDING = 'pending';
     const STATUS_PROCESSING = 'processing';

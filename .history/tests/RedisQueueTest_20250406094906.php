@@ -262,36 +262,42 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        // AWS ValKey/ElastiCache connection configuration with RBAC
         $parameters = [
-            'scheme' => 'tls',
+            'scheme' => 'tls',  // Using TLS to match valkey-cli configuration
             'host' => $this->valKeyEndpoint,
             'port' => $this->valKeyPort,
             'username' => $this->valKeyUsername,
             'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'read_write_timeout' => 60,
+            'timeout' => 5
         ];
 
         $options = [
             'parameters' => [
                 'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
+                'password' => $this->valKeyPassword,
+                'timeout' => 5.0,
+                'read_write_timeout' => 60.0
             ],
             'ssl' => [
                 'verify_peer' => false,
-                'verify_peer_name' => false,
-                'SNI_enabled' => true
+                'verify_peer_name' => false
             ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+            'replication' => false
         ];
 
-        print("\n\nConnection Details:");
+        print("\n\nTrying to connect with TLS (matching valkey-cli configuration):");
         print("\nEndpoint: " . $this->valKeyEndpoint);
+        print("\nUsername: " . $this->valKeyUsername);
         print("\nPort: " . $this->valKeyPort);
+        print("\nTimeout settings: " . $parameters['timeout'] . "s connect, " . $parameters['read_write_timeout'] . "s read/write");
 
         try {
             $redis = new Client($parameters, $options);
+            
+            // Set connection timeout
+            $redis->connect()->setTimeout(5.0);
             
             // Verify connection by trying a simple command
             print("\nTrying PING command...");
@@ -324,6 +330,11 @@ class RedisQueueTest extends TestCase
                 print("\nPrevious Error: " . $e->getPrevious()->getMessage());
             }
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
+        } catch (\Predis\Response\ServerException $e) {
+            print("\nServer Error Details:");
+            print("\nMessage: " . $e->getMessage());
+            print("\nCode: " . $e->getCode());
+            $this->fail('Redis server error: ' . $e->getMessage());
         } catch (\Exception $e) {
             print("\nUnexpected Error:");
             print("\nType: " . get_class($e));

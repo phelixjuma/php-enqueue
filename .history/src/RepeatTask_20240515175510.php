@@ -6,7 +6,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 
 class RepeatTask extends Task {
- 
+
     /**
      * @param $job
      * @param $args

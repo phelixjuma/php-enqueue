@@ -18,7 +18,7 @@ class RedisQueue implements QueueInterface
         $this->failed_queue_name = $queueName . '.failed';
     }
 
-    /** 
+    /**
      * @param $name
      * @return $this
      */

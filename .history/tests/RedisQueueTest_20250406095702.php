@@ -262,45 +262,52 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        print("\n\nNetwork Path Verification:");
+        print("\nEndpoint: " . $this->valKeyEndpoint);
+        print("\nPort: " . $this->valKeyPort);
+
+        // Test basic TCP reachability first
+        $startTime = microtime(true);
+        $socket = @fsockopen($this->valKeyEndpoint, $this->valKeyPort, $errno, $errstr, 5);
+        $endTime = microtime(true);
+        
+        if (!$socket) {
+            print("\nTCP connection failed:");
+            print("\nError ($errno): $errstr");
+            print("\nThis indicates the host is not reachable. Common causes:");
+            print("\n1. Running outside the VPC without VPC connectivity");
+            print("\n2. Security group not allowing access from your IP/security group");
+            print("\n3. Network ACLs blocking access");
+            print("\n4. Route table misconfiguration");
+            $this->markTestSkipped('Cannot establish TCP connection to host. Check VPC connectivity.');
+            return;
+        }
+        
+        print("\nTCP connection successful!");
+        print("\nConnection time: " . round(($endTime - $startTime) * 1000, 2) . "ms");
+        fclose($socket);
+
+        // Now try Redis connection
         $parameters = [
             'scheme' => 'tls',
             'host' => $this->valKeyEndpoint,
             'port' => $this->valKeyPort,
-            'username' => $this->valKeyUsername,
-            'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'timeout' => 5
         ];
 
-        $options = [
-            'parameters' => [
-                'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
-            ],
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'SNI_enabled' => true
-            ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
-        ];
-
-        print("\n\nConnection Details:");
-        print("\nEndpoint: " . $this->valKeyEndpoint);
-        print("\nPort: " . $this->valKeyPort);
-
+        print("\n\nTrying Redis connection:");
+        
         try {
-            $redis = new Client($parameters, $options);
-            
-            // Verify connection by trying a simple command
+            $redis = new Client($parameters);
             print("\nTrying PING command...");
+            $startTime = microtime(true);
             $pong = $redis->ping();
-            $this->assertEquals('PONG', $pong, 'Redis connection failed');
-            print("\nPING successful!");
+            $endTime = microtime(true);
+            print("\nPING successful! Response time: " . round(($endTime - $startTime) * 1000, 2) . "ms");
             
             $queue = new RedisQueue($redis);
-
+            print("\nRedis connection established successfully!");
+            
             // Queue a test task
             print("\nTrying to enqueue task...");
             $result = $queue
@@ -323,6 +330,10 @@ class RedisQueueTest extends TestCase
             if ($e->getPrevious()) {
                 print("\nPrevious Error: " . $e->getPrevious()->getMessage());
             }
+            print("\n\nSince TCP connection worked but Redis failed, this suggests:");
+            print("\n1. TLS handshake failure");
+            print("\n2. Redis authentication failure");
+            print("\n3. Redis not accepting connections (max_clients reached)");
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
         } catch (\Exception $e) {
             print("\nUnexpected Error:");

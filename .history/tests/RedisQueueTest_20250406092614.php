@@ -21,10 +21,29 @@ class RedisQueueTest extends TestCase
         try {
             // Get the absolute path to the project root
             $projectRoot = dirname(__DIR__);
+            
+            // Check if .env file exists
+            if (!file_exists($projectRoot . '/.env')) {
+                print("\n.env file not found in {$projectRoot}/.env");
+                print("\nTrying to copy .env.example to .env...");
+                
+                if (file_exists($projectRoot . '/.env.example')) {
+                    copy($projectRoot . '/.env.example', $projectRoot . '/.env');
+                    print("\nCopied .env.example to .env");
+                } else {
+                    throw new \Exception(".env.example file not found in {$projectRoot}");
+                }
+            }
 
             // Load environment variables from .env file
             $dotenv = \Dotenv\Dotenv::createImmutable($projectRoot);
             $dotenv->load();
+            
+            // Debug: Print all relevant environment variables
+            print("\nEnvironment Variables:");
+            print("\nAWS_VALKEY_ENDPOINT: " . (getenv('AWS_VALKEY_ENDPOINT') ?: 'not set'));
+            print("\nAWS_VALKEY_USERNAME: " . (getenv('AWS_VALKEY_USERNAME') ?: 'not set'));
+            print("\nAWS_VALKEY_PORT: " . (getenv('AWS_VALKEY_PORT') ?: 'not set'));
             
             // Required environment variables for ValKey tests
             $dotenv->required([
@@ -33,14 +52,9 @@ class RedisQueueTest extends TestCase
                 'AWS_VALKEY_PASSWORD'
             ])->notEmpty();
             
-            // Store the values in class properties for use in tests
-            $this->valKeyEndpoint = $_ENV['AWS_VALKEY_ENDPOINT'] ?? null;
-            $this->valKeyUsername = $_ENV['AWS_VALKEY_USERNAME'] ?? null;
-            $this->valKeyPassword = $_ENV['AWS_VALKEY_PASSWORD'] ?? null;
-            $this->valKeyPort = $_ENV['AWS_VALKEY_PORT'] ?? 6379;
-            
-            if (!$this->valKeyEndpoint || !$this->valKeyUsername || !$this->valKeyPassword) {
-                throw new \Exception("Required ValKey configuration is missing after loading .env file");
+            // Optional environment variables
+            if (getenv('AWS_VALKEY_PORT')) {
+                $dotenv->ifPresent('AWS_VALKEY_PORT')->isInteger();
             }
             
         } catch (\Dotenv\Exception\ValidationException $e) {
@@ -255,81 +269,54 @@ class RedisQueueTest extends TestCase
         $this->assertInstanceOf(Task::class, $fetchedTask);
     }
 
-    protected $valKeyEndpoint;
-    protected $valKeyUsername;
-    protected $valKeyPassword;
-    protected $valKeyPort;
-
     public function testAwsValKeyConnection()
     {
+        // AWS ValKey/ElastiCache connection configuration with RBAC
         $parameters = [
             'scheme' => 'tls',
-            'host' => $this->valKeyEndpoint,
-            'port' => $this->valKeyPort,
-            'username' => $this->valKeyUsername,
-            'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'host' => getenv('AWS_VALKEY_ENDPOINT') ?: 'your-elasticache-endpoint.cache.amazonaws.com',
+            'port' => getenv('AWS_VALKEY_PORT') ?: 6379,
+            // For RBAC, username is required along with password
+            'username' => getenv('AWS_VALKEY_USERNAME'),
+            'password' => getenv('AWS_VALKEY_PASSWORD')
         ];
 
         $options = [
             'parameters' => [
-                'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
+                'username' => getenv('AWS_VALKEY_USERNAME'),
+                'password' => getenv('AWS_VALKEY_PASSWORD')
             ],
             'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'SNI_enabled' => true
-            ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+                'verify_peer' => true,
+                'verify_peer_name' => true
+            ]
         ];
 
-        print("\n\nConnection Details:");
-        print("\nEndpoint: " . $this->valKeyEndpoint);
-        print("\nPort: " . $this->valKeyPort);
-
         try {
+            
             $redis = new Client($parameters, $options);
             
             // Verify connection by trying a simple command
-            print("\nTrying PING command...");
             $pong = $redis->ping();
             $this->assertEquals('PONG', $pong, 'Redis connection failed');
-            print("\nPING successful!");
             
             $queue = new RedisQueue($redis);
 
             // Queue a test task
-            print("\nTrying to enqueue task...");
             $result = $queue
                 ->setName('valkey_test_queue')
                 ->enqueue(new Task(new EmailJob(), ['time' => date("Y-m-d H:i:s", time())], 'valkey-test-task'));
 
             $this->assertTrue($result);
-            print("\nTask enqueued successfully!");
 
             // Fetch and verify the task
-            print("\nTrying to fetch task...");
             $fetchedTask = $queue->fetch();
             $this->assertInstanceOf(Task::class, $fetchedTask);
-            print("\nTask fetched successfully!");
             
         } catch (\Predis\Connection\ConnectionException $e) {
-            print("\nConnection Error Details:");
-            print("\nMessage: " . $e->getMessage());
-            print("\nCode: " . $e->getCode());
-            if ($e->getPrevious()) {
-                print("\nPrevious Error: " . $e->getPrevious()->getMessage());
-            }
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            print("\nUnexpected Error:");
-            print("\nType: " . get_class($e));
-            print("\nMessage: " . $e->getMessage());
-            print("\nCode: " . $e->getCode());
-            $this->fail('Unexpected error: ' . $e->getMessage());
+        } catch (\Predis\Response\ServerException $e) {
+            $this->fail('Redis server error: ' . $e->getMessage());
         }
     }
 }

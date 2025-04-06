@@ -4,7 +4,7 @@ namespace Phelixjuma\Enqueue;
 
 
 interface QueueInterface
-{ 
+{
 
     /**
      * @return mixed

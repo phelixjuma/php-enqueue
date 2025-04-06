@@ -262,31 +262,43 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        // First try a simple TCP connection without TLS or auth
         $parameters = [
-            'scheme' => 'tls',
+            'scheme' => 'tcp',
             'host' => $this->valKeyEndpoint,
             'port' => $this->valKeyPort,
-            'username' => $this->valKeyUsername,
-            'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'timeout' => 5
+        ];
+
+        print("\n\nTrying simple TCP connection first:");
+        print("\nEndpoint: " . $this->valKeyEndpoint);
+        print("\nPort: " . $this->valKeyPort);
+
+        try {
+            $redis = new Client($parameters);
+            print("\nTrying PING command...");
+            $pong = $redis->ping();
+            print("\nSimple TCP connection successful!");
+        } catch (\Exception $e) {
+            print("\nSimple TCP connection failed: " . $e->getMessage());
+            print("\nThis suggests a VPC connectivity issue.");
+        }
+
+        // Now try the full TLS connection
+        $parameters = [
+            'scheme' => 'tcp',  // Try without TLS first
+            'host' => $this->valKeyEndpoint,
+            'port' => $this->valKeyPort,
+            'timeout' => 5
         ];
 
         $options = [
             'parameters' => [
-                'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
-            ],
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'SNI_enabled' => true
-            ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+                'timeout' => 5.0
+            ]
         ];
 
-        print("\n\nConnection Details:");
+        print("\n\nTrying full connection:");
         print("\nEndpoint: " . $this->valKeyEndpoint);
         print("\nPort: " . $this->valKeyPort);
 

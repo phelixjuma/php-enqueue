@@ -262,36 +262,62 @@ class RedisQueueTest extends TestCase
 
     public function testAwsValKeyConnection()
     {
+        // AWS ValKey/ElastiCache connection configuration with RBAC
         $parameters = [
-            'scheme' => 'tls',
+            'scheme' => 'tls',  // Using TLS to match valkey-cli configuration
             'host' => $this->valKeyEndpoint,
             'port' => $this->valKeyPort,
             'username' => $this->valKeyUsername,
             'password' => $this->valKeyPassword,
-            'persistent' => true,  // Enable connection pooling
-            'read_write_timeout' => 60
+            'read_write_timeout' => 60,
+            'timeout' => 50,
+            'persistent' => false  // Disable persistent connections for testing
         ];
 
         $options = [
             'parameters' => [
                 'username' => $this->valKeyUsername,
-                'password' => $this->valKeyPassword
+                'password' => $this->valKeyPassword,
+                'timeout' => 50.0,
+                'read_write_timeout' => 60.0
             ],
             'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,
-                'SNI_enabled' => true
+                'cafile' => null,
+                'verify' => false
             ],
-            'replication' => 'sentinel',  // Enable read from replica support
-            'service' => 'mymaster'
+            'replication' => false,
+            'exceptions' => true  // Make sure exceptions are enabled
         ];
 
         print("\n\nConnection Details:");
         print("\nEndpoint: " . $this->valKeyEndpoint);
         print("\nPort: " . $this->valKeyPort);
+        print("\nScheme: " . $parameters['scheme']);
+        print("\nTimeout settings: " . $parameters['timeout'] . "s connect, " . $parameters['read_write_timeout'] . "s read/write");
+        print("\nTLS Verification: Disabled for testing");
+        
+        // Test if the host is reachable first
+        print("\n\nTesting host reachability...");
+        $socket = @fsockopen('tcp://' . $this->valKeyEndpoint, $this->valKeyPort, $errno, $errstr, 5);
+        if (!$socket) {
+            print("\nHost unreachable: ($errno) $errstr");
+        } else {
+            print("\nHost is reachable on port " . $this->valKeyPort);
+            fclose($socket);
+        }
 
         try {
+            print("\n\nInitializing Redis client...");
             $redis = new Client($parameters, $options);
+            
+            print("\nAttempting connection...");
+            $connection = $redis->connect();
+            print("\nConnection established!");
+            
+            // Set connection timeout
+            $connection->setTimeout(50.0);
             
             // Verify connection by trying a simple command
             print("\nTrying PING command...");
@@ -324,6 +350,11 @@ class RedisQueueTest extends TestCase
                 print("\nPrevious Error: " . $e->getPrevious()->getMessage());
             }
             $this->fail('Failed to connect to ValKey: ' . $e->getMessage());
+        } catch (\Predis\Response\ServerException $e) {
+            print("\nServer Error Details:");
+            print("\nMessage: " . $e->getMessage());
+            print("\nCode: " . $e->getCode());
+            $this->fail('Redis server error: ' . $e->getMessage());
         } catch (\Exception $e) {
             print("\nUnexpected Error:");
             print("\nType: " . get_class($e));

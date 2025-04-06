@@ -16,6 +16,7 @@ use Phelixjuma\Enqueue\RedisQueue;
 use Predis\Client;
 use Dotenv\Dotenv;
 use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 $options = getopt('', ['engine:', 'queue:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:']);
 
@@ -82,6 +83,9 @@ if ($queueEngine == 'beanstalkd') {
     try {
         
         $redis = new Client($parameters, $options);
+        
+        // Test the connection
+        $redis->ping();
         
         $queue = new RedisQueue($redis);
 

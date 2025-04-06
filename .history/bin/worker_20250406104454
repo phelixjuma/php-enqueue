@@ -16,6 +16,7 @@ use Phelixjuma\Enqueue\RedisQueue;
 use Predis\Client;
 use Dotenv\Dotenv;
 use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 $options = getopt('', ['engine:', 'queue:', 'max_retries:', 'log_path:', 'log_level:','max_time:', 'max_jobs:']);
 
@@ -80,17 +81,17 @@ if ($queueEngine == 'beanstalkd') {
     ];
 
     try {
-        
         $redis = new Client($parameters, $options);
-        
-        $queue = new RedisQueue($redis);
+        // Test the connection
+        $redis->ping();
+        $this->queue = new RedisQueue($redis);
 
     } catch (\Predis\Connection\ConnectionException $e) {
-        $log->error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
-        throw new Exception("Failed to establish connection with AWS Valkey Redis queue service: " . $e->getMessage());
+        LoggerService::error("Failed to connect to AWS Valkey Redis: " . $e->getMessage());
+        throw new CustomException("Failed to establish connection with AWS Valkey Redis queue service: " . $e->getMessage());
     } catch (Exception $e) {
-        $log->error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
-        throw new Exception("Unexpected error occurred while setting up AWS Valkey Redis queue: " . $e->getMessage());
+        LoggerService::error("Unexpected error while connecting to AWS Valkey Redis: " . $e->getMessage());
+        throw new CustomException("Unexpected error occurred while setting up AWS Valkey Redis queue: " . $e->getMessage());
     }
 }
 
