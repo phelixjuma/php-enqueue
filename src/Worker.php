@@ -81,6 +81,17 @@ class Worker
         return $this;
     }
 
+    private static function getCurrentMemoryUsagePercent() {
+        $meminfo = file_get_contents('/proc/meminfo');
+        if (!$meminfo) return null;
+        preg_match('/MemTotal:\s+(\d+)/', $meminfo, $totalMatches);
+        preg_match('/MemAvailable:\s+(\d+)/', $meminfo, $availMatches);
+        if (!$totalMatches || !$availMatches) return null;
+        $totalMemory = (int)$totalMatches[1];
+        $availableMemory = (int)$availMatches[1];
+        return (100 * (($totalMemory - $availableMemory) / $totalMemory));
+    }
+
     /**
      * @return void
      */
@@ -92,6 +103,15 @@ class Worker
         $pingInterval = 30; // Check connection every 30 seconds
 
         while (true) {
+
+            // memory check
+            $memoryUsage = self::getCurrentMemoryUsagePercent();
+
+            if ($memoryUsage > 80) {
+                $this->logger->error("Memory limit exceeded: " . $memoryUsage . " bytes. Exiting worker.");
+                break;
+            }
+
             $currentTime = time();
 
             // Periodic connection check
