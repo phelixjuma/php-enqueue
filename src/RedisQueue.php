@@ -192,6 +192,8 @@ class RedisQueue implements QueueInterface
 
             $tasks = $this->client->zrangebyscore($this->queue_name, 0, $now, ['limit' => [0, 1]]);
 
+            print_r($tasks);
+
             if (!empty($tasks)) {
                 $key = $tasks[0];
                 $serializedTask = $this->client->get($key);
